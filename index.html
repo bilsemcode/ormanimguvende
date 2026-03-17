@@ -215,6 +215,11 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div class="hb" id="heartsD">❤️❤️❤️</div>
     <span class="oxy-lbl">🫁</span>
     <div id="oxyBar"><div id="oxyFill" style="width:100%"></div></div>
+    <div class="hb" id="fireKitHud" style="gap:6px">
+      <span style="font-size:10px;color:#00e5ff;font-weight:700;text-transform:uppercase;letter-spacing:.5px">[E]</span>
+      <span style="font-size:16px">🧯</span>
+      <span style="font-family:'Fredoka One',cursive;font-size:16px;color:#fff" id="fireKitRemain">0</span>
+    </div>
     <div class="hb"><span class="hl" id="lvlLbl">-</span></div>
   </div>
   <div id="timerWrap">
@@ -380,11 +385,13 @@ function spawnAnimals(){
   const animals=[];
   const groundTypes=['🐇','🦊','🦌','🐿️'];
   for(let i=0;i<9;i++){
+    const ang=Math.random()*Math.PI*2;
+    const spd=20+Math.random()*30;
     animals.push({
       type:groundTypes[Math.floor(Math.random()*groundTypes.length)],
       x:200+Math.random()*(MW-400),y:200+Math.random()*(MH-400),
       vx:0,vy:0,dir:1,
-      state:'idle',stateTimer:2+Math.random()*3,
+      state:'idle',stateTimer:1+Math.random()*3,
       anim:0,dead:false,bird:false,
       targetVx:0,targetVy:0,
     });
@@ -393,13 +400,13 @@ function spawnAnimals(){
     const spd=50+Math.random()*40;
     const ang=Math.random()*Math.PI*2;
     animals.push({
-      type:'🐦',
-      x:200+Math.random()*(MW-400),y:100+Math.random()*300,
-      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+      type:'bird',
+      x:200+Math.random()*(MW-400),y:80+Math.random()*200,
+      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd*.3,
       dir:Math.cos(ang)>=0?1:-1,
       state:'walk',stateTimer:3+Math.random()*4,
       anim:0,dead:false,bird:true,
-      targetVx:Math.cos(ang)*spd,targetVy:Math.sin(ang)*spd,
+      targetVx:Math.cos(ang)*spd,targetVy:Math.sin(ang)*spd*.3,
     });
   }
   return animals;
@@ -470,6 +477,9 @@ function initGS(level){
     wind:initWind(),
     weather:initWeather(),
     powerups:[],puTimer:8+Math.random()*12,
+    fireKits:[],fireKitTimer:15+Math.random()*10, // spawning kits on map
+    fireKitStock:0, // collected kits in inventory (max 2)
+    fireKitUsed:0,  // total used this game
     keys:{},qPool:qArr,qUsed:[],nextQTimer:randQInterval(cfg),
     fIdCtr:0,fireTimers:{},
     wrongFirePending:false,wrongFireDelay:0,
@@ -550,18 +560,23 @@ function update(dt){
     let ny=p.wy+(my/l)*spd;
     // Pump recoil: slight pushback opposite to facing
     if(p.holdingPump){nx-=p.dir*1.5;} // gentle recoil
-    // Tree collision with sliding
+    // Tree collision — push-out method (no sticking)
     for(const t of gs.trees){
-      const cs=t.grown?t.s:t.growPct*t.s,tcr=t.collR*cs;
-      if(Math.hypot(nx-t.x,ny-t.y)<COLL_R+tcr){
-        if(Math.hypot(p.wx+(mx/l)*spd-t.x,p.wy-t.y)>=COLL_R+tcr)ny=p.wy;
-        else if(Math.hypot(p.wx-t.x,p.wy+(my/l)*spd-t.y)>=COLL_R+tcr)nx=p.wx;
-        else{nx=p.wx;ny=p.wy;}
-        break;
+      const cs=t.grown?t.s:t.growPct*t.s;
+      const tcr=(t.collR||18)*cs*0.7; // slightly smaller than visual
+      const ddx=nx-t.x, ddy=ny-t.y;
+      const dd=Math.hypot(ddx,ddy);
+      const minDist=COLL_R+tcr;
+      if(dd<minDist&&dd>0.01){
+        // Push player out along overlap normal
+        const push=(minDist-dd)/dd;
+        nx+=ddx*push;
+        ny+=ddy*push;
       }
     }
+    // World bounds — generous bottom so ground never traps
     p.wx=Math.max(20,Math.min(MW-20,nx));
-    p.wy=Math.max(60,Math.min(MH-20,ny));
+    p.wy=Math.max(55,Math.min(MH-20,ny));
     if(hasSpeed&&Math.random()<.4)
       p.speedTrail.push({x:p.wx,y:p.wy,life:.5,col:['#FFD60A','#FF6B35','#fff'][Math.floor(Math.random()*3)]});
   }
@@ -576,7 +591,15 @@ function update(dt){
 
   // Trash
   if(Math.random()<cfg.trashRate*60*dt)spawnTrash();
-  for(const t of gs.trash){t.age+=dt;gs.oxygen=Math.max(0,gs.oxygen-.0005*60*dt);if(!t.onFire&&t.age>7&&Math.random()<cfg.fireRate*60*dt)spawnFire(t.x,t.y);}
+  for(const t of gs.trash){
+    t.age+=dt;
+    gs.oxygen=Math.max(0,gs.oxygen-.0004*60*dt);
+    // All trash can cause fires; max 3 fires total
+    if(!t.onFire&&t.age>8&&gs.fires.length<3&&Math.random()<cfg.fireRate*60*dt){
+      t.onFire=true;
+      spawnFire(t.x,t.y);
+    }
+  }
   for(let i=gs.trash.length-1;i>=0;i--){
     const t=gs.trash[i];
     if(!t.onFire&&wDist(p,t)<32){
@@ -685,6 +708,56 @@ function update(dt){
     if(pu.age>25)gs.powerups.splice(i,1);
   }
 
+  // Fire extinguisher kits — max 2 uses, spawn near player, each stays 20s then moves
+  gs.fireKitTimer-=dt;
+  if(gs.fireKitTimer<=0&&gs.fireKits.length<1&&gs.fireKitStock<2){
+    gs.fireKitTimer=18+Math.random()*12;
+    const ang=Math.random()*Math.PI*2, dist2=120+Math.random()*200;
+    gs.fireKits.push({
+      x:Math.max(80,Math.min(MW-80,p.wx+Math.cos(ang)*dist2)),
+      y:Math.max(80,Math.min(MH-80,p.wy+Math.sin(ang)*dist2)),
+      pulse:0,age:0,blink:0
+    });
+  }
+  for(let i=gs.fireKits.length-1;i>=0;i--){
+    const kit=gs.fireKits[i];kit.pulse+=dt*3;kit.age+=dt;kit.blink+=dt;
+    // Player collects kit — goes into inventory
+    if(wDist3(p,kit)<36){
+      gs.fireKits.splice(i,1);
+      gs.fireKitStock=Math.min(2,gs.fireKitStock+1);
+      showToast(`🧯 Kit toplandı! [E] ile kullan — Envanter: ${gs.fireKitStock}🧯`,'#00b4d8');
+      playSound('collect');
+      continue;
+    }
+    // Move kit after 20s if not collected
+    if(kit.age>20){
+      const ang2=Math.random()*Math.PI*2,d2=150+Math.random()*220;
+      kit.x=Math.max(80,Math.min(MW-80,p.wx+Math.cos(ang2)*d2));
+      kit.y=Math.max(80,Math.min(MH-80,p.wy+Math.sin(ang2)*d2));
+      kit.age=0;
+    }
+  }
+
+  // [E] key — use fire kit from inventory
+  if((k['e']||k['E'])&&!gs.eKeyHeld&&gs.fireKitStock>0){
+    gs.eKeyHeld=true;
+    gs.fireKitStock--;
+    gs.fireKitUsed++;
+    const extCount=gs.fires.length;
+    for(const f of gs.fires){
+      gs.fidan++;gs.score+=30;gs.goldEarned+=2;
+      delete gs.fireTimers[f.id];
+      plantSapling(f.x,f.y);
+    }
+    gs.fires=[];
+    gs.oxygen=Math.min(100,gs.oxygen+Math.max(1,extCount)*6);
+    gs.firesSuppressed+=extCount;
+    showToast(`🧯 Kit kullanıldı! Tüm yangınlar söndü! Kalan: ${gs.fireKitStock}🧯`,'#00e5ff');
+    showPowerupLabel('🧯 Tüm Yangınlar Söndürüldü!','#00e5ff');
+    playSound('extinguish');checkBadges();
+  }
+  if(!k['e']&&!k['E'])gs.eKeyHeld=false;
+
   // Leaf particles
   if(gs.wind.active&&Math.random()<.3){
     gs.leafParticles.push({x:gs.cam.x+Math.random()*W,y:gs.cam.y+Math.random()*H/2,vx:Math.cos(gs.wind.angle)*80*gs.wind.strength+(Math.random()-.5)*20,vy:Math.sin(gs.wind.angle)*80*gs.wind.strength+20+Math.random()*20,r:Math.random()*4+2,life:1.5,rot:Math.random()*Math.PI*2,rotV:(.5-Math.random())*3,col:['#52b788','#7ed957','#FFD60A','#95d5b2'][Math.floor(Math.random()*4)]});
@@ -723,6 +796,13 @@ function update(dt){
   document.getElementById('goldHudC').textContent=getGold()+gs.goldEarned;
   updateOxyBar();
 
+  // Fire kit HUD — show inventory count, highlight when available
+  const fkRemain=gs.fireKitStock;
+  document.getElementById('fireKitRemain').textContent=fkRemain;
+  const fkHud=document.getElementById('fireKitHud');
+  fkHud.style.opacity=fkRemain>0?'1':'0.45';
+  fkHud.style.background=fkRemain>0?'rgba(0,180,220,.35)':'rgba(0,0,0,.45)';
+  fkHud.style.boxShadow=fkRemain>0?'0 0 8px rgba(0,230,255,.5)':'none';
   // Powerup HUD
   const puHud=document.getElementById('powerupHud');
   const actPU=Object.keys(p.activeEffects).filter(k2=>p.activeEffects[k2]>0);
@@ -891,11 +971,15 @@ function render(){
   for(const a of gs.plantAnims){drawPlantAnim(a,wToS(a.x,a.y));}
 
   // Trash
-  const TI=['🧴','🥤','📦','🧻','🛍️'];
+  // Trash — types: 0=plastic bag, 1=plastic bottle, 2=cardboard, 3=paper, 4=can, 5=glass bottle
+  const TI=['🛍️','🧴','📦','🧻','🥫','🍾'];
   for(const t of gs.trash){const s=wToS(t.x,t.y);if(s.x>-30&&s.x<W+30&&s.y>-30&&s.y<H+30){ctx.save();ctx.font=`${t.onFire?16:22}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';if(t.age>5)ctx.globalAlpha=.5+.5*Math.sin(Date.now()/270);ctx.fillText(TI[t.type],s.x,s.y);ctx.restore();}}
 
   // Power-ups
   for(const pu of gs.powerups){const s=wToS(pu.x,pu.y);if(s.x>-40&&s.x<W+40&&s.y>-40&&s.y<H+40)drawPowerup(pu,s);}
+
+  // Fire extinguisher kits
+  for(const kit of gs.fireKits){const s=wToS(kit.x,kit.y);if(s.x>-50&&s.x<W+50&&s.y>-50&&s.y<H+50)drawFireKit(kit,s);}
 
   // Leaf particles
   for(const lf of gs.leafParticles){const lx=lf.x-gs.cam.x,ly=lf.y-gs.cam.y;ctx.save();ctx.globalAlpha=lf.life*.8;ctx.fillStyle=lf.col;ctx.translate(lx,ly);ctx.rotate(lf.rot);ctx.beginPath();ctx.ellipse(0,0,lf.r,lf.r*.5,0,0,Math.PI*2);ctx.fill();ctx.restore();}
@@ -1007,14 +1091,135 @@ function drawFire(f,s){
 }
 function drawAnimal(a){
   const s=wToS(a.x,a.y);
-  const bob=a.state==='walk'?Math.sin(a.anim)*2.5:0;
-  ctx.save();ctx.translate(s.x,s.y-bob);
-  // FIX: flip based on actual movement direction
+  const isWalking=a.state!=='idle';
+  const bob=isWalking?Math.sin(a.anim)*2.5:0;
+  const legSwing=isWalking?Math.sin(a.anim)*22:0;
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  // Face direction of travel — dir=1 right, dir=-1 left
   if(a.dir<0)ctx.scale(-1,1);
-  ctx.font=(a.state==='panic'?'20':'24')+'px serif';
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(a.type,0,0);
-  if(a.state==='panic'){ctx.font='12px serif';ctx.fillText('😱',a.dir>0?10:-10,-16);}
+
+  if(a.bird){
+    // Simple bird: body ellipse + wing flap
+    const wingFlap=isWalking?Math.sin(a.anim*2)*12:0;
+    ctx.fillStyle='#555';
+    // Body
+    ctx.beginPath();ctx.ellipse(0,-2,9,5,0,0,Math.PI*2);ctx.fill();
+    // Head
+    ctx.fillStyle='#444';ctx.beginPath();ctx.arc(7,-4,5,0,Math.PI*2);ctx.fill();
+    // Beak
+    ctx.fillStyle='#e6a817';ctx.beginPath();ctx.moveTo(11,-4);ctx.lineTo(15,-3);ctx.lineTo(11,-2);ctx.closePath();ctx.fill();
+    // Eye
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(8.5,-5,1.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(9,-5,0.8,0,Math.PI*2);ctx.fill();
+    // Wings
+    ctx.fillStyle='#777';
+    ctx.save();ctx.translate(-2,-2);ctx.rotate((-25+wingFlap)*Math.PI/180);
+    ctx.beginPath();ctx.ellipse(0,-6,4,9,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    // Legs
+    ctx.strokeStyle='#e6a817';ctx.lineWidth=1.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-2,3);ctx.lineTo(-2,8);ctx.moveTo(2,3);ctx.lineTo(2,8);ctx.stroke();
+  } else if(a.type==='🐇'){
+    // Rabbit
+    const lsc=COLL_R; // scale reference
+    // Legs (animated)
+    ctx.fillStyle='#c8b8a2';
+    ctx.save();ctx.translate(-4,8+bob);ctx.rotate(legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-3,0,6,10,3);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(4,8+bob);ctx.rotate(-legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-3,0,6,10,3);ctx.fill();ctx.restore();
+    // Body
+    ctx.fillStyle='#d4c4a8';ctx.beginPath();ctx.ellipse(0,2+bob,9,11,0,0,Math.PI*2);ctx.fill();
+    // Head
+    ctx.fillStyle='#d4c4a8';ctx.beginPath();ctx.arc(0,-11+bob,8,0,Math.PI*2);ctx.fill();
+    // Ears
+    ctx.fillStyle='#d4c4a8';
+    ctx.save();ctx.translate(-4,-18+bob);ctx.rotate(-.1);ctx.beginPath();ctx.ellipse(0,0,3,8,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(4,-18+bob);ctx.rotate(.1);ctx.beginPath();ctx.ellipse(0,0,3,8,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    // Inner ears
+    ctx.fillStyle='#f4a0a0';
+    ctx.save();ctx.translate(-4,-18+bob);ctx.rotate(-.1);ctx.beginPath();ctx.ellipse(0,0,1.5,5,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(4,-18+bob);ctx.rotate(.1);ctx.beginPath();ctx.ellipse(0,0,1.5,5,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    // Eyes
+    ctx.fillStyle='#ff6699';ctx.beginPath();ctx.arc(3.5,-12+bob,1.8,0,Math.PI*2);ctx.fill();
+    // Nose + tail
+    ctx.fillStyle='#ffaaaa';ctx.beginPath();ctx.arc(7,-10+bob,1.2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-9,4+bob,3.5,0,Math.PI*2);ctx.fill();
+  } else if(a.type==='🦊'){
+    // Fox
+    ctx.fillStyle='#e8621a';
+    // Tail
+    ctx.save();ctx.translate(-10,4+bob);ctx.rotate(.3);ctx.beginPath();ctx.ellipse(0,0,5,12,-.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,6,3,6,-.3,0,Math.PI*2);ctx.fill();ctx.restore();
+    // Legs
+    ctx.fillStyle='#c0521a';
+    ctx.save();ctx.translate(-4,8+bob);ctx.rotate(legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2.5,0,5,10,2);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(4,8+bob);ctx.rotate(-legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2.5,0,5,10,2);ctx.fill();ctx.restore();
+    // Body
+    ctx.fillStyle='#e8621a';ctx.beginPath();ctx.ellipse(0,2+bob,10,12,0,0,Math.PI*2);ctx.fill();
+    // Belly
+    ctx.fillStyle='#f5e0c8';ctx.beginPath();ctx.ellipse(0,5+bob,6,7,0,0,Math.PI*2);ctx.fill();
+    // Head
+    ctx.fillStyle='#e8621a';ctx.beginPath();ctx.arc(0,-12+bob,9,0,Math.PI*2);ctx.fill();
+    // Ears
+    ctx.fillStyle='#e8621a';
+    ctx.beginPath();ctx.moveTo(-7,-18+bob);ctx.lineTo(-4,-26+bob);ctx.lineTo(-1,-18+bob);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(1,-18+bob);ctx.lineTo(4,-26+bob);ctx.lineTo(7,-18+bob);ctx.closePath();ctx.fill();
+    // Face mask
+    ctx.fillStyle='#f5e0c8';ctx.beginPath();ctx.arc(0,-12+bob,5,-.5,Math.PI+.5);ctx.fill();
+    // Eyes + nose
+    ctx.fillStyle='#333';ctx.beginPath();ctx.arc(3.5,-14+bob,1.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#333';ctx.beginPath();ctx.arc(5,-11+bob,1.5,0,Math.PI*2);ctx.fill();
+  } else if(a.type==='🦌'){
+    // Deer
+    // Legs
+    ctx.fillStyle='#a0734a';
+    ctx.save();ctx.translate(-4,8+bob);ctx.rotate(legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2,0,4,14,2);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(4,8+bob);ctx.rotate(-legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2,0,4,14,2);ctx.fill();ctx.restore();
+    // Body
+    ctx.fillStyle='#c4885a';ctx.beginPath();ctx.ellipse(0,2+bob,11,13,0,0,Math.PI*2);ctx.fill();
+    // Neck
+    ctx.fillStyle='#c4885a';ctx.beginPath();ctx.roundRect(-4,-14+bob,8,10,3);ctx.fill();
+    // Head
+    ctx.fillStyle='#c4885a';ctx.beginPath();ctx.arc(0,-20+bob,8,0,Math.PI*2);ctx.fill();
+    // Antlers
+    ctx.strokeStyle='#7a4f28';ctx.lineWidth=2;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-3,-26+bob);ctx.lineTo(-5,-34+bob);ctx.moveTo(-5,-34+bob);ctx.lineTo(-8,-30+bob);ctx.moveTo(-5,-34+bob);ctx.lineTo(-2,-31+bob);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(3,-26+bob);ctx.lineTo(5,-34+bob);ctx.moveTo(5,-34+bob);ctx.lineTo(8,-30+bob);ctx.moveTo(5,-34+bob);ctx.lineTo(2,-31+bob);ctx.stroke();
+    // Ears + face
+    ctx.fillStyle='#c4885a';ctx.beginPath();ctx.ellipse(-10,-20+bob,4,6,.2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f4a8a8';ctx.beginPath();ctx.ellipse(-10,-20+bob,2,3,.2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#333';ctx.beginPath();ctx.arc(3,-21+bob,1.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#7a4f28';ctx.beginPath();ctx.arc(6,-19+bob,2,0,Math.PI*2);ctx.fill();
+  } else if(a.type==='🐿️'){
+    // Squirrel
+    // Big fluffy tail
+    ctx.fillStyle='#a0622a';
+    ctx.save();ctx.translate(-8,2+bob);ctx.rotate(.5);ctx.beginPath();ctx.ellipse(0,-8,6,14,.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5d5a0';ctx.beginPath();ctx.ellipse(0,-8,3,9,.3,0,Math.PI*2);ctx.fill();ctx.restore();
+    // Legs
+    ctx.fillStyle='#a0622a';
+    ctx.save();ctx.translate(-3,7+bob);ctx.rotate(legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2,0,4,8,2);ctx.fill();ctx.restore();
+    ctx.save();ctx.translate(3,7+bob);ctx.rotate(-legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2,0,4,8,2);ctx.fill();ctx.restore();
+    // Body
+    ctx.fillStyle='#c0782e';ctx.beginPath();ctx.ellipse(0,2+bob,7,9,0,0,Math.PI*2);ctx.fill();
+    // Belly
+    ctx.fillStyle='#f5e0c0';ctx.beginPath();ctx.ellipse(0,4+bob,4,6,0,0,Math.PI*2);ctx.fill();
+    // Head
+    ctx.fillStyle='#c0782e';ctx.beginPath();ctx.arc(0,-9+bob,7,0,Math.PI*2);ctx.fill();
+    // Ears
+    ctx.beginPath();ctx.arc(-5,-14+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(5,-14+bob,3,0,Math.PI*2);ctx.fill();
+    // Eyes
+    ctx.fillStyle='#222';ctx.beginPath();ctx.arc(3,-10+bob,1.5,0,Math.PI*2);ctx.fill();
+    // Cheek puff
+    ctx.fillStyle='#d89050';ctx.beginPath();ctx.arc(5,-8+bob,3,0,Math.PI*2);ctx.fill();
+    // Nose
+    ctx.fillStyle='#555';ctx.beginPath();ctx.arc(7,-9+bob,1.2,0,Math.PI*2);ctx.fill();
+  }
+
+  // Panic indicator
+  if(a.state==='panic'){
+    ctx.font='13px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('😱',a.dir>0?10:-10,-30);
+  }
   ctx.restore();
 }
 function drawPowerup(pu,s){
@@ -1042,6 +1247,33 @@ function drawPlantAnim(a,s){
   ctx.restore();
 }
 
+function drawFireKit(kit,s){
+  const pulse=Math.sin(kit.pulse)*5;
+  // Urgency blink when fires active
+  const urgent=gs.fires.length>0;
+  const blinkAlpha=urgent?(0.6+Math.sin(kit.blink*8)*.4):1;
+  // Glow
+  ctx.save();
+  ctx.globalAlpha=blinkAlpha*.7;
+  const grd=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,38+pulse);
+  grd.addColorStop(0,'rgba(0,200,255,.5)');grd.addColorStop(1,'rgba(0,200,255,0)');
+  ctx.fillStyle=grd;ctx.beginPath();ctx.arc(s.x,s.y,38+pulse,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  ctx.save();ctx.translate(s.x,s.y);ctx.globalAlpha=blinkAlpha;
+  // Red box
+  ctx.fillStyle='#c0392b';ctx.beginPath();ctx.roundRect(-18,-18,36,32,6);ctx.fill();
+  ctx.fillStyle='#e74c3c';ctx.beginPath();ctx.roundRect(-16,-16,32,28,4);ctx.fill();
+  // Cross symbol
+  ctx.fillStyle='#fff';ctx.fillRect(-3,-12,6,20);ctx.fillRect(-10,-5,20,6);
+  // Emoji icon on top
+  ctx.font=`${18+pulse*.2}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('🧯',0,-28);
+  // "Topla!" label
+  ctx.font='bold 10px Nunito,sans-serif';ctx.fillStyle='#FFD60A';ctx.textAlign='center';
+  ctx.fillText('Topla!',0,20);
+  ctx.restore();
+}
+
 // ── MINIMAP with animated fire pings ──
 function drawMinimap(){
   const mw=110,mh=80,mx=W-mw-12,my=H-mh-14;
@@ -1058,6 +1290,9 @@ function drawMinimap(){
   // Powerups
   ctx.fillStyle='rgba(255,230,50,.9)';
   for(const pu of gs.powerups){ctx.beginPath();ctx.arc(mx+pu.x*scX,my+pu.y*scY,2.5,0,Math.PI*2);ctx.fill();}
+  // Fire kits on minimap
+  ctx.fillStyle='rgba(0,200,255,.9)';
+  for(const kit of gs.fireKits){ctx.beginPath();ctx.arc(mx+kit.x*scX,my+kit.y*scY,3,0,Math.PI*2);ctx.fill();}
   // Fires: animated radar ping
   const pingPhase=(Date.now()/600)%1; // 0..1 repeating
   for(const f of gs.fires){
@@ -1176,7 +1411,7 @@ function spawnFire(x,y){
   const rf=document.getElementById('redFlash');rf.style.background='rgba(220,0,0,0.4)';
   setTimeout(()=>rf.style.background='rgba(220,0,0,0)',180);
   // Panic nearby animals
-  for(const a of gs.animals){if(!a.dead&&wDist2(a,{x,y})<200){a.state='panic';a.stateTimer=5;const ang=Math.atan2(a.y-y,a.x-x);a.vx=Math.cos(ang)*150;a.vy=Math.sin(ang)*150;a.targetVx=a.vx;a.targetVy=a.vy;}}
+  for(const a of gs.animals){if(!a.dead&&wDist2(a,{x,y})<200){a.state='panic';a.stateTimer=5;const ang=Math.atan2(a.y-y,a.x-x);const spd2=a.bird?220:150;a.vx=Math.cos(ang)*spd2;a.vy=Math.sin(ang)*spd2*.5;a.targetVx=a.vx;a.targetVy=a.vy;}}
 }
 // Fire spawn near player visibility
 function spawnFireNear(px,py){
@@ -1188,7 +1423,11 @@ function spawnFireNear(px,py){
   );
 }
 
-function spawnTrash(){gs.trash.push({x:80+Math.random()*(MW-160),y:80+Math.random()*(MH-160),type:Math.floor(Math.random()*5),age:0,onFire:false});}
+function spawnTrash(){
+  // types: 0=plastic bag, 1=plastic bottle, 2=cardboard, 3=paper, 4=can, 5=glass bottle
+  const type=Math.floor(Math.random()*6);
+  gs.trash.push({x:80+Math.random()*(MW-160),y:80+Math.random()*(MH-160),type,age:0,onFire:false});
+}
 function addFx(x,y,text,color){gs.effects.push({x,y,text,color,life:1.5,vx:0,vy:0});}
 function plantSapling(x,y){
   gs.plantAnims.push({x,y,t:0});
