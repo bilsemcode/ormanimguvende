@@ -35,8 +35,7 @@ class MenuScene extends Phaser.Scene{
   }
 
   create(){
-    let w=this.scale.width;
-    let h=this.scale.height;
+    const w=this.scale.width;
 
     this.cameras.main.setBackgroundColor("#f7f7f7");
 
@@ -80,8 +79,8 @@ class GameScene extends Phaser.Scene{
   }
 
   create(){
-    let w=this.scale.width;
-    let h=this.scale.height;
+    const w=this.scale.width;
+    const h=this.scale.height;
 
     this.oxygen=100;
     this.score=0;
@@ -100,10 +99,8 @@ class GameScene extends Phaser.Scene{
       this.playerSpeed=3;
     }
 
-    // Arka plan
     this.cameras.main.setBackgroundColor("#8ecf6e");
 
-    // Üst panel
     this.add.rectangle(w/2,70,w,140,0xf3f1e7).setOrigin(0.5);
     this.add.rectangle(w/2,140,w,4,0xb8b3a5).setOrigin(0.5);
 
@@ -135,39 +132,31 @@ class GameScene extends Phaser.Scene{
       color:"#4a4a4a"
     });
 
-    // Oyun alanı
     this.add.rectangle(w/2,(h+140)/2,w,h-140,0x8ecf6e).setOrigin(0.5);
 
-    // Basit çim dokusu hissi
     for(let i=0;i<140;i++){
       let gx=Phaser.Math.Between(20,w-20);
       let gy=Phaser.Math.Between(160,h-20);
       this.add.circle(gx,gy,Phaser.Math.Between(2,4),0x7fc85d,0.55);
     }
 
-    // Ağaçlar
-    this.trees=[];
-    const treePositions=[
+    this.treePositions=[
       {x:90,y:210},{x:180,y:300},{x:1100,y:220},{x:1180,y:330},
       {x:1040,y:560},{x:150,y:570},{x:320,y:650},{x:960,y:660}
     ];
 
-    treePositions.forEach(pos=>{
+    this.treePositions.forEach(pos=>{
       this.add.rectangle(pos.x,pos.y+18,18,42,0x7a4b22);
       this.add.circle(pos.x,pos.y,34,0x2e7d32);
       this.add.circle(pos.x-18,pos.y+6,24,0x388e3c);
       this.add.circle(pos.x+18,pos.y+6,24,0x388e3c);
     });
 
-    // Karakter
-    this.player=this.add.rectangle(w/2,h/2,36,36,0x2f4bd1);
-    this.player.setStrokeStyle(2,0x18308f);
+    this.createPlayer(w/2,h/2);
 
-    // Klavye
     this.cursors=this.input.keyboard.createCursorKeys();
     this.keys=this.input.keyboard.addKeys("W,A,S,D");
 
-    // Çöpler
     this.trashes=[];
 
     for(let i=0;i<4;i++){
@@ -185,18 +174,80 @@ class GameScene extends Phaser.Scene{
     });
   }
 
+  createPlayer(x,y){
+    this.player={
+      x:x,
+      y:y,
+      dir:"right",
+      moving:false,
+      stepTime:0,
+      stepOffset:0
+    };
+
+    this.playerContainer=this.add.container(x,y);
+
+    this.playerShadow=this.add.ellipse(0,24,30,10,0x000000,0.18);
+
+    this.leftLeg=this.add.rectangle(-7,16,8,20,0x1b2a41);
+    this.rightLeg=this.add.rectangle(7,16,8,20,0x1b2a41);
+
+    this.body=this.add.roundedRectangle(0,0,24,30,6,0x2f80ed);
+    this.body.setStrokeStyle(2,0x1b4f99);
+
+    this.leftArm=this.add.rectangle(-16,1,8,20,0xf2c6a0);
+    this.rightArm=this.add.rectangle(16,1,8,20,0xf2c6a0);
+
+    this.head=this.add.circle(0,-24,12,0xf2c6a0);
+    this.hair=this.add.ellipse(0,-30,24,12,0x5d4037);
+
+    this.playerContainer.add([
+      this.playerShadow,
+      this.leftLeg,
+      this.rightLeg,
+      this.leftArm,
+      this.rightArm,
+      this.body,
+      this.head,
+      this.hair
+    ]);
+  }
+
+  updatePlayerVisual(delta){
+    this.playerContainer.x=this.player.x;
+    this.playerContainer.y=this.player.y;
+
+    if(this.player.moving){
+      this.player.stepTime+=delta*0.018;
+      this.player.stepOffset=Math.sin(this.player.stepTime)*6;
+    }else{
+      this.player.stepOffset=0;
+    }
+
+    this.leftLeg.y=16+this.player.stepOffset;
+    this.rightLeg.y=16-this.player.stepOffset;
+
+    this.leftArm.y=1-this.player.stepOffset*0.7;
+    this.rightArm.y=1+this.player.stepOffset*0.7;
+
+    this.body.y=0;
+    this.head.y=-24+(this.player.moving ? Math.abs(Math.sin(this.player.stepTime))*1.5 : 0);
+    this.hair.y=this.head.y-6;
+    this.playerShadow.scaleX=this.player.moving ? 0.95 : 1;
+
+    if(this.player.dir==="left"){
+      this.playerContainer.scaleX=-1;
+    }else{
+      this.playerContainer.scaleX=1;
+    }
+  }
+
   spawnTrash(){
     let x=Phaser.Math.Between(80,this.scale.width-80);
     let y=Phaser.Math.Between(180,this.scale.height-50);
 
-    // Ağaçlara çok yakın doğmasın
     let safe=true;
-    const treePositions=[
-      {x:90,y:210},{x:180,y:300},{x:1100,y:220},{x:1180,y:330},
-      {x:1040,y:560},{x:150,y:570},{x:320,y:650},{x:960,y:660}
-    ];
 
-    for(let t of treePositions){
+    for(let t of this.treePositions){
       let d=Phaser.Math.Distance.Between(x,y,t.x,t.y);
       if(d<70){
         safe=false;
@@ -241,40 +292,47 @@ class GameScene extends Phaser.Scene{
     this.oxygen=Math.min(100,this.oxygen+3);
   }
 
-  update(){
+  update(time,delta){
     let speed=this.playerSpeed;
+    let vx=0;
+    let vy=0;
 
     if(this.cursors.left.isDown || this.keys.A.isDown){
-      this.player.x-=speed;
+      vx=-speed;
+      this.player.dir="left";
     }
     if(this.cursors.right.isDown || this.keys.D.isDown){
-      this.player.x+=speed;
+      vx=speed;
+      this.player.dir="right";
     }
     if(this.cursors.up.isDown || this.keys.W.isDown){
-      this.player.y-=speed;
+      vy=-speed;
     }
     if(this.cursors.down.isDown || this.keys.S.isDown){
-      this.player.y+=speed;
+      vy=speed;
     }
 
-    // Alan sınırları
+    this.player.x+=vx;
+    this.player.y+=vy;
+    this.player.moving=(vx!==0 || vy!==0);
+
     if(this.player.x<20) this.player.x=20;
     if(this.player.x>this.scale.width-20) this.player.x=this.scale.width-20;
     if(this.player.y<160) this.player.y=160;
     if(this.player.y>this.scale.height-20) this.player.y=this.scale.height-20;
 
-    // Çöp toplama
+    this.updatePlayerVisual(delta);
+
     for(let trash of this.trashes){
       if(!trash.isCollected){
         let distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,trash.x,trash.y);
-        if(distance<30){
+        if(distance<28){
           this.collectTrash(trash);
           break;
         }
       }
     }
 
-    // Oksijen yavaş azalır
     this.oxygen=Math.max(0,this.oxygen-0.01);
     this.oxygenBar.width=2.2*this.oxygen;
   }
