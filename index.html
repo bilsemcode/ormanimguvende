@@ -1,96 +1,167 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ormanım Güvende</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #cfeec2;
-      font-family: Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ormanım Güvende</title>
 
-    #game-container {
-      width: 100vw;
-      height: 100vh;
-    }
+<style>
+html,body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:#cfeec2;
+font-family:Arial;
+}
 
-    canvas {
-      display: block;
-      margin: 0 auto;
-    }
-  </style>
+canvas{
+display:block;
+margin:0 auto;
+}
+</style>
+
 </head>
 <body>
-  <div id="game-container"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 
-  <script>
-    class MainScene extends Phaser.Scene {
-      constructor() {
-        super("MainScene");
-      }
+<script>
 
-      create() {
-        const width = this.scale.width;
-        const height = this.scale.height;
+class MenuScene extends Phaser.Scene{
 
-        this.cameras.main.setBackgroundColor("#87c76b");
+constructor(){
+super("MenuScene")
+}
 
-        this.add.text(width / 2, 70, "Ormanım Güvende", {
-          fontSize: "40px",
-          color: "#ffffff",
-          fontStyle: "bold"
-        }).setOrigin(0.5);
+create(){
 
-        this.add.text(width / 2, 120, "Karakteri ok tuşları veya WASD ile hareket ettir", {
-          fontSize: "22px",
-          color: "#103b0f"
-        }).setOrigin(0.5);
+let w=this.scale.width
+let h=this.scale.height
 
-        this.player = this.add.rectangle(width / 2, height / 2, 40, 40, 0x1e3a8a);
+this.cameras.main.setBackgroundColor("#6dbf5e")
 
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.keys = this.input.keyboard.addKeys("W,A,S,D");
-      }
+this.add.text(w/2,120,"Ormanım Güvende",{
+fontSize:"48px",
+color:"#ffffff",
+fontStyle:"bold"
+}).setOrigin(0.5)
 
-      update() {
-        const speed = 4;
+this.add.text(w/2,200,"Seviye Seç",{
+fontSize:"28px",
+color:"#103b0f"
+}).setOrigin(0.5)
 
-        if (this.cursors.left.isDown || this.keys.A.isDown) {
-          this.player.x -= speed;
-        }
-        if (this.cursors.right.isDown || this.keys.D.isDown) {
-          this.player.x += speed;
-        }
-        if (this.cursors.up.isDown || this.keys.W.isDown) {
-          this.player.y -= speed;
-        }
-        if (this.cursors.down.isDown || this.keys.S.isDown) {
-          this.player.y += speed;
-        }
-      }
-    }
+let anaokulu=this.add.text(w/2,320,"ANAOKULU",{
+fontSize:"32px",
+backgroundColor:"#ffffff",
+padding:10
+}).setOrigin(0.5).setInteractive()
 
-    const config = {
-      type: Phaser.AUTO,
-      width: 1280,
-      height: 720,
-      parent: "game-container",
-      scene: [MainScene],
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-      }
-    };
+let ilkokul=this.add.text(w/2,400,"İLKOKUL",{
+fontSize:"32px",
+backgroundColor:"#ffffff",
+padding:10
+}).setOrigin(0.5).setInteractive()
 
-    new Phaser.Game(config);
-  </script>
+let ortaokul=this.add.text(w/2,480,"ORTAOKUL",{
+fontSize:"32px",
+backgroundColor:"#ffffff",
+padding:10
+}).setOrigin(0.5).setInteractive()
+
+anaokulu.on("pointerdown",()=>{
+this.scene.start("GameScene",{level:"ana"})
+})
+
+ilkokul.on("pointerdown",()=>{
+this.scene.start("GameScene",{level:"ilk"})
+})
+
+ortaokul.on("pointerdown",()=>{
+this.scene.start("GameScene",{level:"orta"})
+})
+
+}
+
+}
+
+class GameScene extends Phaser.Scene{
+
+constructor(){
+super("GameScene")
+}
+
+init(data){
+this.level=data.level
+}
+
+create(){
+
+let w=this.scale.width
+let h=this.scale.height
+
+this.cameras.main.setBackgroundColor("#87c76b")
+
+this.add.text(20,20,"Seviye: "+this.level,{
+fontSize:"24px",
+color:"#000"
+})
+
+this.player=this.add.rectangle(w/2,h/2,40,40,0x1e3a8a)
+
+this.cursors=this.input.keyboard.createCursorKeys()
+this.keys=this.input.keyboard.addKeys("W,A,S,D")
+
+}
+
+update(){
+
+let speed=4
+
+if(this.level=="ana"){
+speed=5
+}
+
+if(this.level=="orta"){
+speed=3
+}
+
+if(this.cursors.left.isDown || this.keys.A.isDown){
+this.player.x-=speed
+}
+
+if(this.cursors.right.isDown || this.keys.D.isDown){
+this.player.x+=speed
+}
+
+if(this.cursors.up.isDown || this.keys.W.isDown){
+this.player.y-=speed
+}
+
+if(this.cursors.down.isDown || this.keys.S.isDown){
+this.player.y+=speed
+}
+
+}
+
+}
+
+const config={
+type:Phaser.AUTO,
+width:1280,
+height:720,
+scene:[MenuScene,GameScene],
+scale:{
+mode:Phaser.Scale.FIT,
+autoCenter:Phaser.Scale.CENTER_BOTH
+}
+}
+
+new Phaser.Game(config)
+
+</script>
+
 </body>
 </html>
