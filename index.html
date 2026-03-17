@@ -1,223 +1,338 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ormanım Güvende</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ormanım Güvende</title>
 
-<style>
-body{
-margin:0;
-padding:0;
-background:#1e1e1e;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-font-family:Arial;
-}
+  <style>
+    body{
+      margin:0;
+      padding:0;
+      background:#1e1e1e;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      font-family:Arial, sans-serif;
+    }
 
-canvas{
-border:6px solid #000;
-border-radius:10px;
-box-shadow:0 0 30px rgba(0,0,0,0.7);
-}
-</style>
+    canvas{
+      border:6px solid #000;
+      border-radius:10px;
+      box-shadow:0 0 30px rgba(0,0,0,0.7);
+    }
+  </style>
 </head>
 <body>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 
 <script>
-
 class MenuScene extends Phaser.Scene{
+  constructor(){
+    super("MenuScene");
+  }
 
-constructor(){
-super("MenuScene")
+  create(){
+    const w=this.scale.width;
+
+    this.cameras.main.setBackgroundColor("#f7f7f7");
+
+    this.add.text(w/2,110,"Ormanım Güvende",{
+      fontSize:"52px",
+      color:"#1f3b1f",
+      fontStyle:"bold"
+    }).setOrigin(0.5);
+
+    this.add.text(w/2,185,"Seviye Seç",{
+      fontSize:"28px",
+      color:"#555555"
+    }).setOrigin(0.5);
+
+    const makeButton=(y,label,key)=>{
+      let btn=this.add.text(w/2,y,label,{
+        fontSize:"32px",
+        color:"#1d1d1d",
+        backgroundColor:"#dff1df",
+        padding:{left:22,right:22,top:12,bottom:12}
+      }).setOrigin(0.5).setInteractive({useHandCursor:true});
+
+      btn.on("pointerover",()=>btn.setStyle({backgroundColor:"#c8e8c8"}));
+      btn.on("pointerout",()=>btn.setStyle({backgroundColor:"#dff1df"}));
+      btn.on("pointerdown",()=>this.scene.start("GameScene",{level:key}));
+    };
+
+    makeButton(310,"ANAOKULU","ana");
+    makeButton(395,"İLKOKUL","ilk");
+    makeButton(480,"ORTAOKUL","orta");
+  }
 }
-
-create(){
-
-let w=this.scale.width
-
-this.cameras.main.setBackgroundColor("#f7f7f7")
-
-this.add.text(w/2,110,"Ormanım Güvende",{
-fontSize:"52px",
-color:"#1f3b1f",
-fontStyle:"bold"
-}).setOrigin(0.5)
-
-this.add.text(w/2,185,"Seviye Seç",{
-fontSize:"28px",
-color:"#555"
-}).setOrigin(0.5)
-
-const makeButton=(y,label,key)=>{
-
-let btn=this.add.text(w/2,y,label,{
-fontSize:"32px",
-color:"#000",
-backgroundColor:"#dff1df",
-padding:{left:22,right:22,top:12,bottom:12}
-})
-.setOrigin(0.5)
-.setInteractive()
-
-btn.on("pointerdown",()=>{
-this.scene.start("GameScene",{level:key})
-})
-
-}
-
-makeButton(310,"ANAOKULU","ana")
-makeButton(395,"İLKOKUL","ilk")
-makeButton(480,"ORTAOKUL","orta")
-
-}
-
-}
-
-
 
 class GameScene extends Phaser.Scene{
+  constructor(){
+    super("GameScene");
+  }
 
-constructor(){
-super("GameScene")
+  init(data){
+    this.level=data.level;
+  }
+
+  preload(){
+    this.load.spritesheet(
+      "hero",
+      "https://labs.phaser.io/src/games/firstgame/assets/dude.png",
+      { frameWidth: 32, frameHeight: 48 }
+    );
+  }
+
+  create(){
+    const w=this.scale.width;
+    const h=this.scale.height;
+
+    this.oxygen=100;
+    this.score=0;
+
+    if(this.level==="ana"){
+      this.lives=5;
+      this.spawnDelay=2500;
+      this.playerSpeed=185;
+    }else if(this.level==="ilk"){
+      this.lives=3;
+      this.spawnDelay=1800;
+      this.playerSpeed=165;
+    }else{
+      this.lives=3;
+      this.spawnDelay=1300;
+      this.playerSpeed=145;
+    }
+
+    // Arka plan ve üst panel
+    this.cameras.main.setBackgroundColor("#8ecf6e");
+    this.add.rectangle(w/2,70,w,140,0xf3f1e7).setOrigin(0.5);
+    this.add.rectangle(w/2,140,w,4,0xb8b3a5).setOrigin(0.5);
+
+    this.add.text(20,20,"Seviye: "+this.level,{
+      fontSize:"22px",
+      color:"#1e1e1e"
+    });
+
+    this.lifeText=this.add.text(20,50,"Can: "+this.lives,{
+      fontSize:"22px",
+      color:"#1e1e1e"
+    });
+
+    this.add.text(20,82,"Oksijen",{
+      fontSize:"20px",
+      color:"#1e1e1e"
+    });
+
+    this.add.rectangle(140,96,220,22,0xbdbdbd).setOrigin(0,0.5);
+    this.oxygenBar=this.add.rectangle(140,96,220,22,0x33c76a).setOrigin(0,0.5);
+
+    this.scoreText=this.add.text(400,20,"Puan: 0",{
+      fontSize:"22px",
+      color:"#1e1e1e"
+    });
+
+    this.taskText=this.add.text(400,50,"Görev: Çöpleri topla",{
+      fontSize:"20px",
+      color:"#4a4a4a"
+    });
+
+    // Oyun sahası
+    this.add.rectangle(w/2,(h+140)/2,w,h-140,0x8ecf6e).setOrigin(0.5);
+
+    for(let i=0;i<140;i++){
+      let gx=Phaser.Math.Between(20,w-20);
+      let gy=Phaser.Math.Between(160,h-20);
+      this.add.circle(gx,gy,Phaser.Math.Between(2,4),0x7fc85d,0.55);
+    }
+
+    // Ağaçlar
+    this.treePositions=[
+      {x:90,y:210},{x:180,y:300},{x:1100,y:220},{x:1180,y:330},
+      {x:1040,y:560},{x:150,y:570},{x:320,y:650},{x:960,y:660}
+    ];
+
+    this.treePositions.forEach(pos=>{
+      this.add.rectangle(pos.x,pos.y+18,18,42,0x7a4b22);
+      this.add.circle(pos.x,pos.y,34,0x2e7d32);
+      this.add.circle(pos.x-18,pos.y+6,24,0x388e3c);
+      this.add.circle(pos.x+18,pos.y+6,24,0x388e3c);
+    });
+
+    // Animasyonlar
+    if(!this.anims.exists("hero-left")){
+      this.anims.create({
+        key:"hero-left",
+        frames:this.anims.generateFrameNumbers("hero",{ start:0, end:3 }),
+        frameRate:10,
+        repeat:-1
+      });
+    }
+
+    if(!this.anims.exists("hero-turn")){
+      this.anims.create({
+        key:"hero-turn",
+        frames:[{ key:"hero", frame:4 }],
+        frameRate:20
+      });
+    }
+
+    if(!this.anims.exists("hero-right")){
+      this.anims.create({
+        key:"hero-right",
+        frames:this.anims.generateFrameNumbers("hero",{ start:5, end:8 }),
+        frameRate:10,
+        repeat:-1
+      });
+    }
+
+    // Karakter
+    this.player=this.add.sprite(w/2,h/2,"hero",4);
+    this.player.setScale(1.3);
+
+    // Gölge
+    this.playerShadow=this.add.ellipse(this.player.x,this.player.y+24,28,10,0x000000,0.18);
+
+    // Kontroller
+    this.cursors=this.input.keyboard.createCursorKeys();
+    this.keys=this.input.keyboard.addKeys("W,A,S,D");
+
+    // Çöpler
+    this.trashes=[];
+
+    for(let i=0;i<4;i++){
+      this.spawnTrash();
+    }
+
+    this.time.addEvent({
+      delay:this.spawnDelay,
+      loop:true,
+      callback:()=>{
+        if(this.trashes.length<12){
+          this.spawnTrash();
+        }
+      }
+    });
+  }
+
+  spawnTrash(){
+    let x=Phaser.Math.Between(80,this.scale.width-80);
+    let y=Phaser.Math.Between(180,this.scale.height-50);
+
+    let safe=true;
+
+    for(let t of this.treePositions){
+      let d=Phaser.Math.Distance.Between(x,y,t.x,t.y);
+      if(d<70){
+        safe=false;
+        break;
+      }
+    }
+
+    if(!safe){
+      this.spawnTrash();
+      return;
+    }
+
+    let type=Phaser.Math.Between(1,3);
+    let trash;
+
+    if(type===1){
+      trash=this.add.rectangle(x,y,24,30,0xf4e04d);
+      trash.setStrokeStyle(2,0xc7a800);
+    }else if(type===2){
+      trash=this.add.rectangle(x,y,22,22,0x9e9e9e);
+      trash.setStrokeStyle(2,0x6f6f6f);
+    }else{
+      trash=this.add.rectangle(x,y,18,32,0x64b5f6);
+      trash.setStrokeStyle(2,0x2d7cc1);
+    }
+
+    trash.isCollected=false;
+    this.trashes.push(trash);
+  }
+
+  collectTrash(trash){
+    if(trash.isCollected) return;
+
+    trash.isCollected=true;
+    trash.destroy();
+
+    this.trashes=this.trashes.filter(t=>t!==trash);
+
+    this.score+=10;
+    this.scoreText.setText("Puan: "+this.score);
+
+    this.oxygen=Math.min(100,this.oxygen+3);
+  }
+
+  update(time,delta){
+    const dt=delta/1000;
+    let vx=0;
+    let vy=0;
+
+    if(this.cursors.left.isDown || this.keys.A.isDown){
+      vx=-this.playerSpeed;
+    }
+    if(this.cursors.right.isDown || this.keys.D.isDown){
+      vx=this.playerSpeed;
+    }
+    if(this.cursors.up.isDown || this.keys.W.isDown){
+      vy=-this.playerSpeed;
+    }
+    if(this.cursors.down.isDown || this.keys.S.isDown){
+      vy=this.playerSpeed;
+    }
+
+    this.player.x += vx * dt;
+    this.player.y += vy * dt;
+
+    if(this.player.x<20) this.player.x=20;
+    if(this.player.x>this.scale.width-20) this.player.x=this.scale.width-20;
+    if(this.player.y<160) this.player.y=160;
+    if(this.player.y>this.scale.height-20) this.player.y=this.scale.height-20;
+
+    this.playerShadow.x=this.player.x;
+    this.playerShadow.y=this.player.y+24;
+
+    if(vx<0){
+      this.player.anims.play("hero-left",true);
+    }else if(vx>0){
+      this.player.anims.play("hero-right",true);
+    }else{
+      this.player.anims.play("hero-turn",true);
+    }
+
+    for(let trash of this.trashes){
+      if(!trash.isCollected){
+        let distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,trash.x,trash.y);
+        if(distance<26){
+          this.collectTrash(trash);
+          break;
+        }
+      }
+    }
+
+    this.oxygen=Math.max(0,this.oxygen-0.01);
+    this.oxygenBar.width=2.2*this.oxygen;
+  }
 }
-
-init(data){
-this.level=data.level
-}
-
-create(){
-
-let w=this.scale.width
-let h=this.scale.height
-
-this.cameras.main.setBackgroundColor("#8ecf6e")
-
-this.oxygen=100
-this.score=0
-
-if(this.level==="ana"){
-this.lives=5
-this.playerSpeed=5
-}else if(this.level==="ilk"){
-this.lives=3
-this.playerSpeed=4
-}else{
-this.lives=3
-this.playerSpeed=3
-}
-
-this.add.text(20,20,"Seviye: "+this.level,{
-fontSize:"22px",
-color:"#000"
-})
-
-this.add.text(20,50,"Can: "+this.lives,{
-fontSize:"22px",
-color:"#000"
-})
-
-this.add.text(20,80,"Oksijen",{
-fontSize:"20px",
-color:"#000"
-})
-
-this.add.rectangle(140,95,220,20,0xcccccc).setOrigin(0,0.5)
-this.oxygenBar=this.add.rectangle(140,95,220,20,0x33c76a).setOrigin(0,0.5)
-
-this.scoreText=this.add.text(400,20,"Puan: 0",{
-fontSize:"22px",
-color:"#000"
-})
-
-/* KARAKTER */
-
-this.player=this.add.container(w/2,h/2)
-
-let shadow=this.add.ellipse(0,20,28,10,0x000000,0.2)
-
-this.leftLeg=this.add.rectangle(-6,12,8,18,0x1b2a41)
-this.rightLeg=this.add.rectangle(6,12,8,18,0x1b2a41)
-
-let body=this.add.rectangle(0,0,22,28,0x2f80ed)
-
-this.leftArm=this.add.rectangle(-14,0,6,18,0xf2c6a0)
-this.rightArm=this.add.rectangle(14,0,6,18,0xf2c6a0)
-
-let head=this.add.circle(0,-20,10,0xf2c6a0)
-
-this.player.add([
-shadow,
-this.leftLeg,
-this.rightLeg,
-this.leftArm,
-this.rightArm,
-body,
-head
-])
-
-this.cursors=this.input.keyboard.createCursorKeys()
-this.keys=this.input.keyboard.addKeys("W,A,S,D")
-
-}
-
-update(){
-
-let speed=this.playerSpeed
-let vx=0
-let vy=0
-
-if(this.cursors.left.isDown || this.keys.A.isDown){
-vx=-speed
-}
-
-if(this.cursors.right.isDown || this.keys.D.isDown){
-vx=speed
-}
-
-if(this.cursors.up.isDown || this.keys.W.isDown){
-vy=-speed
-}
-
-if(this.cursors.down.isDown || this.keys.S.isDown){
-vy=speed
-}
-
-this.player.x+=vx
-this.player.y+=vy
-
-this.leftLeg.y=12+Math.sin(Date.now()/120)*4
-this.rightLeg.y=12-Math.sin(Date.now()/120)*4
-
-this.leftArm.y=Math.sin(Date.now()/120)*3
-this.rightArm.y=-Math.sin(Date.now()/120)*3
-
-this.oxygen=Math.max(0,this.oxygen-0.01)
-this.oxygenBar.width=2.2*this.oxygen
-
-}
-
-}
-
-
 
 const config={
-type:Phaser.AUTO,
-width:1280,
-height:720,
-scene:[MenuScene,GameScene],
-scale:{
-mode:Phaser.Scale.FIT,
-autoCenter:Phaser.Scale.CENTER_BOTH
-}
-}
+  type:Phaser.AUTO,
+  width:1280,
+  height:720,
+  scene:[MenuScene,GameScene],
+  scale:{
+    mode:Phaser.Scale.FIT,
+    autoCenter:Phaser.Scale.CENTER_BOTH
+  }
+};
 
-new Phaser.Game(config)
-
+new Phaser.Game(config);
 </script>
 
 </body>
