@@ -1,12 +1,96 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ormanım Güvende</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #cfeec2;
+      font-family: Arial, sans-serif;
+    }
+
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
+  <div id="game-container"></div>
 
-<h1>Ormanım Güvende Oyunu Başladı</h1>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 
+  <script>
+    class MainScene extends Phaser.Scene {
+      constructor() {
+        super("MainScene");
+      }
+
+      create() {
+        const width = this.scale.width;
+        const height = this.scale.height;
+
+        this.cameras.main.setBackgroundColor("#87c76b");
+
+        this.add.text(width / 2, 70, "Ormanım Güvende", {
+          fontSize: "40px",
+          color: "#ffffff",
+          fontStyle: "bold"
+        }).setOrigin(0.5);
+
+        this.add.text(width / 2, 120, "Karakteri ok tuşları veya WASD ile hareket ettir", {
+          fontSize: "22px",
+          color: "#103b0f"
+        }).setOrigin(0.5);
+
+        this.player = this.add.rectangle(width / 2, height / 2, 40, 40, 0x1e3a8a);
+
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys("W,A,S,D");
+      }
+
+      update() {
+        const speed = 4;
+
+        if (this.cursors.left.isDown || this.keys.A.isDown) {
+          this.player.x -= speed;
+        }
+        if (this.cursors.right.isDown || this.keys.D.isDown) {
+          this.player.x += speed;
+        }
+        if (this.cursors.up.isDown || this.keys.W.isDown) {
+          this.player.y -= speed;
+        }
+        if (this.cursors.down.isDown || this.keys.S.isDown) {
+          this.player.y += speed;
+        }
+      }
+    }
+
+    const config = {
+      type: Phaser.AUTO,
+      width: 1280,
+      height: 720,
+      parent: "game-container",
+      scene: [MainScene],
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      }
+    };
+
+    new Phaser.Game(config);
+  </script>
 </body>
 </html>
