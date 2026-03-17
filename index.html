@@ -6,7 +6,6 @@
 <title>Ormanım Güvende</title>
 
 <style>
-
 body{
 margin:0;
 padding:0;
@@ -23,7 +22,6 @@ border:6px solid #000;
 border-radius:10px;
 box-shadow:0 0 30px rgba(0,0,0,0.7);
 }
-
 </style>
 
 </head>
@@ -114,11 +112,17 @@ let h=this.scale.height
 this.cameras.main.setBackgroundColor("#ffffff")
 
 this.oxygen=100
+this.score=0
 
 if(this.level=="ana"){
 this.lives=5
+this.spawnDelay=2500
+}else if(this.level=="ilk"){
+this.lives=3
+this.spawnDelay=1800
 }else{
 this.lives=3
+this.spawnDelay=1300
 }
 
 this.add.text(20,20,"Seviye: "+this.level,{
@@ -126,7 +130,7 @@ fontSize:"22px",
 color:"#000"
 })
 
-this.add.text(20,50,"Can: "+this.lives,{
+this.lifeText=this.add.text(20,50,"Can: "+this.lives,{
 fontSize:"22px",
 color:"#000"
 })
@@ -137,13 +141,75 @@ color:"#000"
 })
 
 this.add.rectangle(140,95,200,20,0xcccccc).setOrigin(0,0.5)
-
 this.oxygenBar=this.add.rectangle(140,95,200,20,0x32c96a).setOrigin(0,0.5)
+
+this.scoreText=this.add.text(20,120,"Puan: 0",{
+fontSize:"22px",
+color:"#000"
+})
+
+this.add.text(20,155,"Görev: Çöpleri topla",{
+fontSize:"20px",
+color:"#444"
+})
 
 this.player=this.add.rectangle(w/2,h/2,40,40,0x2f4bd1)
 
 this.cursors=this.input.keyboard.createCursorKeys()
 this.keys=this.input.keyboard.addKeys("W,A,S,D")
+
+this.trashes=[]
+
+for(let i=0;i<3;i++){
+this.spawnTrash()
+}
+
+this.time.addEvent({
+delay:this.spawnDelay,
+loop:true,
+callback:()=>{
+if(this.trashes.length<10){
+this.spawnTrash()
+}
+}
+})
+
+}
+
+
+
+spawnTrash(){
+
+let x=Phaser.Math.Between(120,this.scale.width-60)
+let y=Phaser.Math.Between(190,this.scale.height-60)
+
+let colors=[0xffc107,0x9e9e9e,0x8bc34a]
+let color=Phaser.Utils.Array.GetRandom(colors)
+
+let trash=this.add.rectangle(x,y,26,26,color)
+trash.isCollected=false
+
+this.trashes.push(trash)
+
+}
+
+
+
+collectTrash(trash){
+
+if(trash.isCollected){
+return
+}
+
+trash.isCollected=true
+trash.destroy()
+
+this.trashes=this.trashes.filter(t=>t!==trash)
+
+this.score+=10
+this.scoreText.setText("Puan: "+this.score)
+
+this.oxygen=Math.min(100,this.oxygen+2)
 
 }
 
@@ -177,6 +243,30 @@ if(this.cursors.down.isDown || this.keys.S.isDown){
 this.player.y+=speed
 }
 
+if(this.player.x<20){
+this.player.x=20
+}
+if(this.player.x>this.scale.width-20){
+this.player.x=this.scale.width-20
+}
+if(this.player.y<170){
+this.player.y=170
+}
+if(this.player.y>this.scale.height-20){
+this.player.y=this.scale.height-20
+}
+
+for(let trash of this.trashes){
+if(!trash.isCollected){
+let distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,trash.x,trash.y)
+if(distance<32){
+this.collectTrash(trash)
+break
+}
+}
+}
+
+this.oxygen=Math.max(0,this.oxygen-0.01)
 this.oxygenBar.width=2*this.oxygen
 
 }
