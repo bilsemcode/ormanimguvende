@@ -55,21 +55,24 @@ color:"#103b0f"
 
 let anaokulu=this.add.text(w/2,320,"ANAOKULU",{
 fontSize:"32px",
+color:"#000000",
 backgroundColor:"#ffffff",
 padding:10
-}).setOrigin(0.5).setInteractive()
+})
 
 let ilkokul=this.add.text(w/2,400,"İLKOKUL",{
 fontSize:"32px",
+color:"#000000",
 backgroundColor:"#ffffff",
 padding:10
-}).setOrigin(0.5).setInteractive()
+})
 
 let ortaokul=this.add.text(w/2,480,"ORTAOKUL",{
 fontSize:"32px",
+color:"#000000",
 backgroundColor:"#ffffff",
 padding:10
-}).setOrigin(0.5).setInteractive()
+})
 
 anaokulu.on("pointerdown",()=>{
 this.scene.start("GameScene",{level:"ana"})
