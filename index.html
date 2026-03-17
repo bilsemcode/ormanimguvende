@@ -7,287 +7,291 @@
 
 <style>
 body{
-margin:0;
-padding:0;
-background:#1e1e1e;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-font-family:Arial;
+  margin:0;
+  padding:0;
+  background:#1e1e1e;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  font-family:Arial, sans-serif;
 }
 
 canvas{
-border:6px solid #000;
-border-radius:10px;
-box-shadow:0 0 30px rgba(0,0,0,0.7);
+  border:6px solid #000;
+  border-radius:10px;
+  box-shadow:0 0 30px rgba(0,0,0,0.7);
 }
 </style>
-
 </head>
 <body>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 
 <script>
-
 class MenuScene extends Phaser.Scene{
+  constructor(){
+    super("MenuScene");
+  }
 
-constructor(){
-super("MenuScene")
+  create(){
+    let w=this.scale.width;
+    let h=this.scale.height;
+
+    this.cameras.main.setBackgroundColor("#f7f7f7");
+
+    this.add.text(w/2,110,"Ormanım Güvende",{
+      fontSize:"52px",
+      color:"#1f3b1f",
+      fontStyle:"bold"
+    }).setOrigin(0.5);
+
+    this.add.text(w/2,185,"Seviye Seç",{
+      fontSize:"28px",
+      color:"#555555"
+    }).setOrigin(0.5);
+
+    const makeButton=(y,label,key)=>{
+      let btn=this.add.text(w/2,y,label,{
+        fontSize:"32px",
+        color:"#1d1d1d",
+        backgroundColor:"#dff1df",
+        padding:{left:22,right:22,top:12,bottom:12}
+      }).setOrigin(0.5).setInteractive({useHandCursor:true});
+
+      btn.on("pointerover",()=>btn.setStyle({backgroundColor:"#c8e8c8"}));
+      btn.on("pointerout",()=>btn.setStyle({backgroundColor:"#dff1df"}));
+      btn.on("pointerdown",()=>this.scene.start("GameScene",{level:key}));
+    };
+
+    makeButton(310,"ANAOKULU","ana");
+    makeButton(395,"İLKOKUL","ilk");
+    makeButton(480,"ORTAOKUL","orta");
+  }
 }
-
-create(){
-
-let w=this.scale.width
-let h=this.scale.height
-
-this.cameras.main.setBackgroundColor("#ffffff")
-
-this.add.text(w/2,120,"Ormanım Güvende",{
-fontSize:"48px",
-color:"#2b2b2b",
-fontStyle:"bold"
-}).setOrigin(0.5)
-
-this.add.text(w/2,200,"Seviye Seç",{
-fontSize:"28px",
-color:"#444"
-}).setOrigin(0.5)
-
-let anaokulu=this.add.text(w/2,320,"ANAOKULU",{
-fontSize:"32px",
-color:"#000",
-backgroundColor:"#eaeaea",
-padding:10
-}).setOrigin(0.5).setInteractive()
-
-let ilkokul=this.add.text(w/2,400,"İLKOKUL",{
-fontSize:"32px",
-color:"#000",
-backgroundColor:"#eaeaea",
-padding:10
-}).setOrigin(0.5).setInteractive()
-
-let ortaokul=this.add.text(w/2,480,"ORTAOKUL",{
-fontSize:"32px",
-color:"#000",
-backgroundColor:"#eaeaea",
-padding:10
-}).setOrigin(0.5).setInteractive()
-
-anaokulu.on("pointerdown",()=>{
-this.scene.start("GameScene",{level:"ana"})
-})
-
-ilkokul.on("pointerdown",()=>{
-this.scene.start("GameScene",{level:"ilk"})
-})
-
-ortaokul.on("pointerdown",()=>{
-this.scene.start("GameScene",{level:"orta"})
-})
-
-}
-
-}
-
-
 
 class GameScene extends Phaser.Scene{
+  constructor(){
+    super("GameScene");
+  }
 
-constructor(){
-super("GameScene")
+  init(data){
+    this.level=data.level;
+  }
+
+  create(){
+    let w=this.scale.width;
+    let h=this.scale.height;
+
+    this.oxygen=100;
+    this.score=0;
+
+    if(this.level==="ana"){
+      this.lives=5;
+      this.spawnDelay=2500;
+      this.playerSpeed=5;
+    }else if(this.level==="ilk"){
+      this.lives=3;
+      this.spawnDelay=1800;
+      this.playerSpeed=4;
+    }else{
+      this.lives=3;
+      this.spawnDelay=1300;
+      this.playerSpeed=3;
+    }
+
+    // Arka plan
+    this.cameras.main.setBackgroundColor("#8ecf6e");
+
+    // Üst panel
+    this.add.rectangle(w/2,70,w,140,0xf3f1e7).setOrigin(0.5);
+    this.add.rectangle(w/2,140,w,4,0xb8b3a5).setOrigin(0.5);
+
+    this.add.text(20,20,"Seviye: "+this.level,{
+      fontSize:"22px",
+      color:"#1e1e1e"
+    });
+
+    this.lifeText=this.add.text(20,50,"Can: "+this.lives,{
+      fontSize:"22px",
+      color:"#1e1e1e"
+    });
+
+    this.add.text(20,82,"Oksijen",{
+      fontSize:"20px",
+      color:"#1e1e1e"
+    });
+
+    this.add.rectangle(140,96,220,22,0xbdbdbd).setOrigin(0,0.5);
+    this.oxygenBar=this.add.rectangle(140,96,220,22,0x33c76a).setOrigin(0,0.5);
+
+    this.scoreText=this.add.text(400,20,"Puan: 0",{
+      fontSize:"22px",
+      color:"#1e1e1e"
+    });
+
+    this.taskText=this.add.text(400,50,"Görev: Çöpleri topla",{
+      fontSize:"20px",
+      color:"#4a4a4a"
+    });
+
+    // Oyun alanı
+    this.add.rectangle(w/2,(h+140)/2,w,h-140,0x8ecf6e).setOrigin(0.5);
+
+    // Basit çim dokusu hissi
+    for(let i=0;i<140;i++){
+      let gx=Phaser.Math.Between(20,w-20);
+      let gy=Phaser.Math.Between(160,h-20);
+      this.add.circle(gx,gy,Phaser.Math.Between(2,4),0x7fc85d,0.55);
+    }
+
+    // Ağaçlar
+    this.trees=[];
+    const treePositions=[
+      {x:90,y:210},{x:180,y:300},{x:1100,y:220},{x:1180,y:330},
+      {x:1040,y:560},{x:150,y:570},{x:320,y:650},{x:960,y:660}
+    ];
+
+    treePositions.forEach(pos=>{
+      this.add.rectangle(pos.x,pos.y+18,18,42,0x7a4b22);
+      this.add.circle(pos.x,pos.y,34,0x2e7d32);
+      this.add.circle(pos.x-18,pos.y+6,24,0x388e3c);
+      this.add.circle(pos.x+18,pos.y+6,24,0x388e3c);
+    });
+
+    // Karakter
+    this.player=this.add.rectangle(w/2,h/2,36,36,0x2f4bd1);
+    this.player.setStrokeStyle(2,0x18308f);
+
+    // Klavye
+    this.cursors=this.input.keyboard.createCursorKeys();
+    this.keys=this.input.keyboard.addKeys("W,A,S,D");
+
+    // Çöpler
+    this.trashes=[];
+
+    for(let i=0;i<4;i++){
+      this.spawnTrash();
+    }
+
+    this.time.addEvent({
+      delay:this.spawnDelay,
+      loop:true,
+      callback:()=>{
+        if(this.trashes.length<12){
+          this.spawnTrash();
+        }
+      }
+    });
+  }
+
+  spawnTrash(){
+    let x=Phaser.Math.Between(80,this.scale.width-80);
+    let y=Phaser.Math.Between(180,this.scale.height-50);
+
+    // Ağaçlara çok yakın doğmasın
+    let safe=true;
+    const treePositions=[
+      {x:90,y:210},{x:180,y:300},{x:1100,y:220},{x:1180,y:330},
+      {x:1040,y:560},{x:150,y:570},{x:320,y:650},{x:960,y:660}
+    ];
+
+    for(let t of treePositions){
+      let d=Phaser.Math.Distance.Between(x,y,t.x,t.y);
+      if(d<70){
+        safe=false;
+        break;
+      }
+    }
+
+    if(!safe){
+      this.spawnTrash();
+      return;
+    }
+
+    let type=Phaser.Math.Between(1,3);
+    let trash;
+
+    if(type===1){
+      trash=this.add.rectangle(x,y,24,30,0xf4e04d);
+      trash.setStrokeStyle(2,0xc7a800);
+    }else if(type===2){
+      trash=this.add.rectangle(x,y,22,22,0x9e9e9e);
+      trash.setStrokeStyle(2,0x6f6f6f);
+    }else{
+      trash=this.add.rectangle(x,y,18,32,0x64b5f6);
+      trash.setStrokeStyle(2,0x2d7cc1);
+    }
+
+    trash.isCollected=false;
+    this.trashes.push(trash);
+  }
+
+  collectTrash(trash){
+    if(trash.isCollected) return;
+
+    trash.isCollected=true;
+    trash.destroy();
+
+    this.trashes=this.trashes.filter(t=>t!==trash);
+
+    this.score+=10;
+    this.scoreText.setText("Puan: "+this.score);
+
+    this.oxygen=Math.min(100,this.oxygen+3);
+  }
+
+  update(){
+    let speed=this.playerSpeed;
+
+    if(this.cursors.left.isDown || this.keys.A.isDown){
+      this.player.x-=speed;
+    }
+    if(this.cursors.right.isDown || this.keys.D.isDown){
+      this.player.x+=speed;
+    }
+    if(this.cursors.up.isDown || this.keys.W.isDown){
+      this.player.y-=speed;
+    }
+    if(this.cursors.down.isDown || this.keys.S.isDown){
+      this.player.y+=speed;
+    }
+
+    // Alan sınırları
+    if(this.player.x<20) this.player.x=20;
+    if(this.player.x>this.scale.width-20) this.player.x=this.scale.width-20;
+    if(this.player.y<160) this.player.y=160;
+    if(this.player.y>this.scale.height-20) this.player.y=this.scale.height-20;
+
+    // Çöp toplama
+    for(let trash of this.trashes){
+      if(!trash.isCollected){
+        let distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,trash.x,trash.y);
+        if(distance<30){
+          this.collectTrash(trash);
+          break;
+        }
+      }
+    }
+
+    // Oksijen yavaş azalır
+    this.oxygen=Math.max(0,this.oxygen-0.01);
+    this.oxygenBar.width=2.2*this.oxygen;
+  }
 }
-
-init(data){
-this.level=data.level
-}
-
-create(){
-
-let w=this.scale.width
-let h=this.scale.height
-
-this.cameras.main.setBackgroundColor("#ffffff")
-
-this.oxygen=100
-this.score=0
-
-if(this.level=="ana"){
-this.lives=5
-this.spawnDelay=2500
-}else if(this.level=="ilk"){
-this.lives=3
-this.spawnDelay=1800
-}else{
-this.lives=3
-this.spawnDelay=1300
-}
-
-this.add.text(20,20,"Seviye: "+this.level,{
-fontSize:"22px",
-color:"#000"
-})
-
-this.lifeText=this.add.text(20,50,"Can: "+this.lives,{
-fontSize:"22px",
-color:"#000"
-})
-
-this.add.text(20,80,"Oksijen",{
-fontSize:"20px",
-color:"#000"
-})
-
-this.add.rectangle(140,95,200,20,0xcccccc).setOrigin(0,0.5)
-this.oxygenBar=this.add.rectangle(140,95,200,20,0x32c96a).setOrigin(0,0.5)
-
-this.scoreText=this.add.text(20,120,"Puan: 0",{
-fontSize:"22px",
-color:"#000"
-})
-
-this.add.text(20,155,"Görev: Çöpleri topla",{
-fontSize:"20px",
-color:"#444"
-})
-
-this.player=this.add.rectangle(w/2,h/2,40,40,0x2f4bd1)
-
-this.cursors=this.input.keyboard.createCursorKeys()
-this.keys=this.input.keyboard.addKeys("W,A,S,D")
-
-this.trashes=[]
-
-for(let i=0;i<3;i++){
-this.spawnTrash()
-}
-
-this.time.addEvent({
-delay:this.spawnDelay,
-loop:true,
-callback:()=>{
-if(this.trashes.length<10){
-this.spawnTrash()
-}
-}
-})
-
-}
-
-
-
-spawnTrash(){
-
-let x=Phaser.Math.Between(120,this.scale.width-60)
-let y=Phaser.Math.Between(190,this.scale.height-60)
-
-let colors=[0xffc107,0x9e9e9e,0x8bc34a]
-let color=Phaser.Utils.Array.GetRandom(colors)
-
-let trash=this.add.rectangle(x,y,26,26,color)
-trash.isCollected=false
-
-this.trashes.push(trash)
-
-}
-
-
-
-collectTrash(trash){
-
-if(trash.isCollected){
-return
-}
-
-trash.isCollected=true
-trash.destroy()
-
-this.trashes=this.trashes.filter(t=>t!==trash)
-
-this.score+=10
-this.scoreText.setText("Puan: "+this.score)
-
-this.oxygen=Math.min(100,this.oxygen+2)
-
-}
-
-
-
-update(){
-
-let speed=4
-
-if(this.level=="ana"){
-speed=5
-}
-
-if(this.level=="orta"){
-speed=3
-}
-
-if(this.cursors.left.isDown || this.keys.A.isDown){
-this.player.x-=speed
-}
-
-if(this.cursors.right.isDown || this.keys.D.isDown){
-this.player.x+=speed
-}
-
-if(this.cursors.up.isDown || this.keys.W.isDown){
-this.player.y-=speed
-}
-
-if(this.cursors.down.isDown || this.keys.S.isDown){
-this.player.y+=speed
-}
-
-if(this.player.x<20){
-this.player.x=20
-}
-if(this.player.x>this.scale.width-20){
-this.player.x=this.scale.width-20
-}
-if(this.player.y<170){
-this.player.y=170
-}
-if(this.player.y>this.scale.height-20){
-this.player.y=this.scale.height-20
-}
-
-for(let trash of this.trashes){
-if(!trash.isCollected){
-let distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,trash.x,trash.y)
-if(distance<32){
-this.collectTrash(trash)
-break
-}
-}
-}
-
-this.oxygen=Math.max(0,this.oxygen-0.01)
-this.oxygenBar.width=2*this.oxygen
-
-}
-
-}
-
-
 
 const config={
-type:Phaser.AUTO,
-width:1280,
-height:720,
-scene:[MenuScene,GameScene],
-scale:{
-mode:Phaser.Scale.FIT,
-autoCenter:Phaser.Scale.CENTER_BOTH
-}
-}
+  type:Phaser.AUTO,
+  width:1280,
+  height:720,
+  scene:[MenuScene,GameScene],
+  scale:{
+    mode:Phaser.Scale.FIT,
+    autoCenter:Phaser.Scale.CENTER_BOTH
+  }
+};
 
-new Phaser.Game(config)
-
+new Phaser.Game(config);
 </script>
 
 </body>
