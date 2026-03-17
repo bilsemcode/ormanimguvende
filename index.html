@@ -6,6 +6,7 @@
 <title>Ormanım Güvende</title>
 
 <style>
+
 html,body{
 margin:0;
 padding:0;
@@ -20,6 +21,7 @@ canvas{
 display:block;
 margin:0 auto;
 }
+
 </style>
 
 </head>
@@ -58,21 +60,21 @@ fontSize:"32px",
 color:"#000000",
 backgroundColor:"#ffffff",
 padding:10
-})
+}).setOrigin(0.5).setInteractive()
 
 let ilkokul=this.add.text(w/2,400,"İLKOKUL",{
 fontSize:"32px",
 color:"#000000",
 backgroundColor:"#ffffff",
 padding:10
-})
+}).setOrigin(0.5).setInteractive()
 
 let ortaokul=this.add.text(w/2,480,"ORTAOKUL",{
 fontSize:"32px",
 color:"#000000",
 backgroundColor:"#ffffff",
 padding:10
-})
+}).setOrigin(0.5).setInteractive()
 
 anaokulu.on("pointerdown",()=>{
 this.scene.start("GameScene",{level:"ana"})
@@ -89,6 +91,8 @@ this.scene.start("GameScene",{level:"orta"})
 }
 
 }
+
+
 
 class GameScene extends Phaser.Scene{
 
@@ -107,17 +111,53 @@ let h=this.scale.height
 
 this.cameras.main.setBackgroundColor("#87c76b")
 
+/* OKSİJEN */
+
+this.oxygen=100
+
+/* CAN SAYISI */
+
+if(this.level=="ana"){
+this.lives=5
+}else{
+this.lives=3
+}
+
+/* EKRAN BİLGİLERİ */
+
 this.add.text(20,20,"Seviye: "+this.level,{
 fontSize:"24px",
 color:"#000"
 })
 
+this.add.text(20,55,"Can: "+this.lives,{
+fontSize:"24px",
+color:"#000"
+})
+
+this.add.text(20,90,"Oksijen",{
+fontSize:"22px",
+color:"#000"
+})
+
+/* OKSİJEN BAR */
+
+this.add.rectangle(150,105,200,22,0x444444).setOrigin(0,0.5)
+
+this.oxygenBar=this.add.rectangle(150,105,200,22,0x3bd16f).setOrigin(0,0.5)
+
+/* KARAKTER */
+
 this.player=this.add.rectangle(w/2,h/2,40,40,0x1e3a8a)
+
+/* KLAVYE */
 
 this.cursors=this.input.keyboard.createCursorKeys()
 this.keys=this.input.keyboard.addKeys("W,A,S,D")
 
 }
+
+
 
 update(){
 
@@ -130,6 +170,8 @@ speed=5
 if(this.level=="orta"){
 speed=3
 }
+
+/* HAREKET */
 
 if(this.cursors.left.isDown || this.keys.A.isDown){
 this.player.x-=speed
@@ -147,9 +189,15 @@ if(this.cursors.down.isDown || this.keys.S.isDown){
 this.player.y+=speed
 }
 
+/* OKSİJEN BAR GÜNCELLE */
+
+this.oxygenBar.width=2*this.oxygen
+
 }
 
 }
+
+
 
 const config={
 type:Phaser.AUTO,
