@@ -1,411 +1,309 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ormanım Güvende 🌳 - Pro Edition</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
-#scaler{transform-origin:center center}
-#gc{width:960px;height:680px;position:relative;overflow:hidden;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.8)}
-.screen{position:absolute;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center}
-.screen.active{display:flex}
+from pathlib import Path
+import re, json, textwrap, os, sys, math
+p=Path('/mnt/data/index.html')
+html=p.read_text(encoding='utf-8')
 
-/* ── OVERLAYS ── */
-#darkOverlay{position:absolute;inset:0;background:rgba(0,0,0,0);pointer-events:none;z-index:51;transition:background 0.8s}
-#redFlash{position:absolute;inset:0;background:rgba(220,0,0,0);pointer-events:none;z-index:52;transition:background .06s}
-#fireVignette{position:absolute;inset:0;pointer-events:none;z-index:53;opacity:0;transition:opacity 1s;background:radial-gradient(ellipse at center,transparent 55%,rgba(220,50,0,.55) 100%)}
-#rainOverlay{position:absolute;inset:0;pointer-events:none;z-index:54;opacity:0;transition:opacity .8s;background:rgba(60,80,140,.18)}
-#lightningFlash{position:absolute;inset:0;background:rgba(255,255,255,0);pointer-events:none;z-index:55;transition:background .04s}
-#windLabel{position:absolute;top:72px;left:50%;transform:translateX(-50%);font-family:'Fredoka One',cursive;font-size:13px;color:#a8e6cf;background:rgba(0,0,0,.5);padding:4px 14px;border-radius:20px;z-index:100;pointer-events:none;opacity:0;transition:opacity .4s}
-#windLabel.show{opacity:1}
-#weatherLabel{position:absolute;top:90px;left:50%;transform:translateX(-50%);font-family:'Fredoka One',cursive;font-size:16px;color:#fff;background:rgba(40,60,140,.7);padding:6px 18px;border-radius:20px;z-index:101;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap}
-#weatherLabel.show{opacity:1}
-#powerupLabel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);font-family:'Fredoka One',cursive;font-size:28px;color:#FFD60A;text-shadow:0 0 20px rgba(255,214,10,.8),2px 2px 0 #333;z-index:200;pointer-events:none;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .4s}
-#powerupLabel.show{transform:translate(-50%,-60%) scale(1)}
+# CSS insert after #goldLeafDisplay line
+css_add = """
+.char-ability{font-size:10px;color:#fff;background:rgba(116,198,157,.18);border:1px solid rgba(116,198,157,.25);padding:6px 8px;border-radius:10px;margin-top:8px;line-height:1.35;min-height:40px}
+.stat-wrap{margin-top:8px;display:grid;gap:5px;text-align:left}
+.stat-row{display:grid;grid-template-columns:44px 1fr;gap:6px;align-items:center}
+.stat-label{font-size:9px;color:#b7e4c7;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.stat-bar{height:7px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.stat-fill{height:100%;background:linear-gradient(90deg,#52b788,#FFD60A);border-radius:99px}
+#charPerkHud{background:rgba(0,0,0,.5);color:#fff;font-family:'Fredoka One',cursive;font-size:13px;padding:5px 12px;border-radius:20px}
+#qExplain{margin-top:12px;font-size:12px;color:#1b4332;background:#eafaf0;border-radius:12px;padding:10px 12px;line-height:1.45;display:none}
+#qExplain.show{display:block}
+"""
+html=html.replace("#goldLeafDisplay{font-family:'Fredoka One',cursive;font-size:16px;color:#FFD60A;background:rgba(0,0,0,.5);padding:6px 16px;border-radius:20px;margin-bottom:14px}",
+                  "#goldLeafDisplay{font-family:'Fredoka One',cursive;font-size:16px;color:#FFD60A;background:rgba(0,0,0,.5);padding:6px 16px;border-radius:20px;margin-bottom:14px}\n"+css_add)
 
-/* ── TITLE ── */
-#titleScreen{background:linear-gradient(180deg,#5bc8f5 0%,#7ed957 60%,#4a7c3f 100%);position:relative}
-.title-trees{position:absolute;bottom:0;width:100%;height:200px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 200'%3E%3Cpolygon points='60,200 120,65 180,200' fill='%231b4332'/%3E%3Cpolygon points='90,200 120,30 150,200' fill='%232d6a4f'/%3E%3Cpolygon points='340,200 410,60 480,200' fill='%231b4332'/%3E%3Cpolygon points='370,200 410,25 450,200' fill='%232d6a4f'/%3E%3Cpolygon points='640,200 710,65 780,200' fill='%231b4332'/%3E%3Cpolygon points='670,200 710,30 750,200' fill='%232d6a4f'/%3E%3Cpolygon points='820,200 870,75 920,200' fill='%231b4332'/%3E%3C/svg%3E") bottom/cover no-repeat}
-.tc{z-index:10;text-align:center;padding:20px}
-.gtitle{font-family:'Fredoka One',cursive;font-size:64px;color:#fff;text-shadow:4px 4px 0 #1b4332;line-height:1.05;margin-bottom:8px}
-.gsub{font-size:18px;color:#fff;background:rgba(27,67,50,.75);padding:9px 24px;border-radius:20px;margin-bottom:30px}
-.sbtn{font-family:'Fredoka One',cursive;font-size:27px;padding:17px 56px;background:linear-gradient(135deg,#FFD60A,#FF6B35);color:#fff;border:none;border-radius:50px;cursor:pointer;box-shadow:0 6px 0 #b84a0e,0 8px 18px rgba(0,0,0,.3);transition:all .15s}
-.sbtn:hover{transform:translateY(-2px);box-shadow:0 8px 0 #b84a0e}
-.sbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #b84a0e}
+# Add qExplain div in qbox
+html=html.replace('<div class="qopts" id="qOpts"></div>\n  </div>',
+                  '<div class="qopts" id="qOpts"></div>\n    <div id="qExplain"></div>\n  </div>')
+# add char perk hud
+html=html.replace('<div id="bottomHud">\n    <div id="fidanD">🌱 <span id="fidanC">0</span>  🍃 <span id="goldHudC">0</span></div>\n    <div id="powerupHud"></div>\n    <div></div>\n  </div>',
+                  '<div id="bottomHud">\n    <div id="fidanD">🌱 <span id="fidanC">0</span>  🍃 <span id="goldHudC">0</span></div>\n    <div id="powerupHud"></div>\n    <div id="charPerkHud">⭐ Hazır</div>\n  </div>')
 
-/* ── CHAR SELECT (RPG Geliştirme) ── */
-#charScreen{background:linear-gradient(135deg,#1a3a2a,#0d2218)}
-.char-title{font-family:'Fredoka One',cursive;font-size:36px;color:#b7e4c7;margin-bottom:4px;text-align:center}
-.char-sub{color:#74c69d;font-size:14px;margin-bottom:18px;text-align:center}
-.char-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-.char-card{width:160px;padding:16px 12px;border-radius:22px;cursor:pointer;text-align:center;border:3px solid rgba(255,255,255,0.12);transition:all 0.2s;background:rgba(255,255,255,0.06);position:relative}
-.char-card.selected{border-color:#FFD60A;background:rgba(255,214,10,0.15);transform:scale(1.05)}
-.char-stats{margin-top:8px;text-align:left;padding:0 5px}
-.stat-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
-.stat-lbl{font-size:9px;color:#b7e4c7;width:35px}
-.stat-bar{flex:1;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
-.stat-fill{height:100%;background:#FFD60A}
-.ability-badge{font-size:10px;color:#FFD60A;font-weight:bold;margin-top:4px;display:block}
+# Replace CHARS block
+new_chars = """const CHARS=[
+  {name:'Maceracı\\nÇocuk', desc:'Hızlı ve çevik!', ability:'⚡ Hız Ustası: +%25 hareket', skin:'#FDBCB4',hair:'#3a1a00',shirt:'#3a86ff',pants:'#1d3557',hat:'#2563d8',bodyW:20,headR:13,fatness:0.88,shortLegs:false,legLen:22,armLen:17,price:0,stats:{speed:95,extinguish:55,oxygen:60,eco:55}, perks:{speedMul:1.25, extinguishMul:1, oxygenMul:1, ecoBonus:0, hint:false}},
+  {name:'Doğa\\nSevdalısı', desc:'Fidan ve puan ustası!', ability:'🌿 Doğa Bonusu: fidan başına +10 puan', skin:'#FDBCB4',hair:'#8B1a1a',shirt:'#ff6b9d',pants:'#6b2d6b',hat:'#d94f80',bodyW:18,headR:12,fatness:0.82,shortLegs:false,legLen:24,armLen:18,price:50,stats:{speed:72,extinguish:58,oxygen:66,eco:96}, perks:{speedMul:1.05, extinguishMul:1, oxygenMul:1.05, ecoBonus:10, hint:false}},
+  {name:'Cesur\\nOrmancı', desc:'Yangın söndürmede güçlü!', ability:'💧 Söndürme Gücü: +%40 yangın hasarı', skin:'#C68642',hair:'#1a0a00',shirt:'#2dc653',pants:'#1b4332',hat:'#1da042',bodyW:28,headR:16,fatness:1.28,shortLegs:false,legLen:21,armLen:18,price:80,stats:{speed:62,extinguish:98,oxygen:70,eco:64}, perks:{speedMul:0.98, extinguishMul:1.4, oxygenMul:1.1, ecoBonus:0, hint:false}},
+  {name:'Bilge\\nÇevreci', desc:'Sorularda ipucu verir!', ability:'🧠 Bilge İpucu: her soruda 1 yanlış şık kapanır', skin:'#F1C27D',hair:'#1a0800',shirt:'#ffd60a',pants:'#7c5c00',hat:'#c9a800',bodyW:23,headR:15,fatness:1.02,shortLegs:true,legLen:16,armLen:15,price:120,stats:{speed:68,extinguish:72,oxygen:86,eco:82}, perks:{speedMul:1, extinguishMul:1.1, oxygenMul:1.18, ecoBonus:4, hint:true}},
+];"""
+html = re.sub(r"const CHARS=\[[\s\S]*?\n\];\n\n// ── QUESTIONS ──", new_chars+"\n\n// ── QUESTIONS ──", html, count=1)
 
-/* ── LEVEL ── */
-#levelScreen{background:linear-gradient(180deg,#2d6a4f,#1b4332)}
-.level-title{font-family:'Fredoka One',cursive;font-size:38px;color:#b7e4c7;margin-bottom:28px;text-align:center}
-.level-cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-.lcard{width:190px;padding:24px 18px;border-radius:20px;cursor:pointer;text-align:center;border:3px solid transparent;transition:all .2s}
-.lcard:hover{transform:translateY(-5px) scale(1.05)}
-.lcard.anaokulu{background:linear-gradient(135deg,#74c69d,#52b788);border-color:#b7e4c7}
-.lcard.ilkokul{background:linear-gradient(135deg,#ffd60a,#f9a825);border-color:#fff59d}
-.lcard.ortaokul{background:linear-gradient(135deg,#ff6b35,#e63946);border-color:#ffcdd2}
-.lcard-icon{font-size:50px;margin-bottom:8px;display:block}
-.lcard-name{font-family:'Fredoka One',cursive;font-size:20px;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.3)}
-.lcard-desc{font-size:11px;color:rgba(255,255,255,.9);margin-top:5px;line-height:1.4}
-.back-btn{font-family:'Fredoka One',cursive;font-size:17px;padding:11px 28px;background:rgba(255,255,255,.1);color:#b7e4c7;border:2px solid rgba(255,255,255,.2);border-radius:50px;cursor:pointer;transition:all .15s}
-
-/* ── GAME HUD ── */
-#gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
-#hud{position:absolute;top:0;left:0;right:0;padding:9px 14px;display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,transparent 100%);z-index:100;pointer-events:none}
-.hb{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.45);padding:5px 11px;border-radius:20px}
-.hl{font-size:10px;color:#b7e4c7;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-.hv{font-family:'Fredoka One',cursive;font-size:16px;color:#fff}
-#oxyBar{flex:1;height:13px;background:rgba(0,0,0,.4);border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.2)}
-#oxyFill{height:100%;border-radius:8px;background:linear-gradient(90deg,#74c69d,#52b788);transition:width .4s,background .4s}
-
-/* ── QUESTION ── */
-#qOverlay{position:absolute;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(3px)}
-#qOverlay.active{display:flex}
-.qbox{background:linear-gradient(135deg,#fff,#f0fff4);border-radius:24px;padding:30px;max-width:520px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5);border:4px solid #74c69d}
-.qtext{font-size:17px;font-weight:800;color:#1b4332;line-height:1.4;margin-bottom:16px}
-.qopts{display:grid;gap:9px}
-.qbtn{padding:11px 14px;border:3px solid #b7e4c7;border-radius:14px;background:#f0fff4;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#1b4332;cursor:pointer;transition:all .15s;text-align:left}
-.qbtn:hover{background:#74c69d;color:#fff}
-.qbtn.correct{background:#52b788!important;color:#fff!important;border-color:#2d6a4f!important}
-.qbtn.wrong{background:#e63946!important;color:#fff!important;border-color:#c1121f!important}
-
-/* ── TOAST & BADGE ── */
-#toast{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:9px 22px;border-radius:20px;font-weight:700;font-size:14px;z-index:300;opacity:0;transition:opacity .3s;white-space:nowrap}
-#toast.show{opacity:1}
-#badgePop{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:linear-gradient(135deg,#FFD60A,#ff6b35);color:#fff;padding:16px 28px;border-radius:20px;text-align:center;z-index:249;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
-#badgePop.show{transform:translate(-50%,-50%) scale(1)}
-</style>
-</head>
-<body>
-<div id="scaler">
-<div id="gc">
-
-<div id="darkOverlay"></div>
-<div id="redFlash"></div>
-<div id="fireVignette"></div>
-<div id="rainOverlay"></div>
-<div id="lightningFlash"></div>
-<div id="windLabel"></div>
-<div id="weatherLabel"></div>
-<div id="powerupLabel"></div>
-
-<div id="titleScreen" class="screen active">
-  <div class="title-trees"></div>
-  <div class="tc">
-    <div style="font-size:68px;margin-bottom:6px">🌳</div>
-    <div class="gtitle">Ormanım<br>Güvende!</div>
-    <div class="gsub">🌱 Çevre Koruma Macerası 🌱</div>
-    <button class="sbtn" onclick="showScreen('nameScreen')">Oynamaya Başla ▶</button>
-    <div style="margin-top:12px"><button class="back-btn" onclick="showScreen('scoreboardScreen');renderSB()">🏆 Skor Tablosu</button></div>
-  </div>
-</div>
-
-<div id="nameScreen" class="screen">
-  <div style="font-size:56px;margin-bottom:10px">🧑‍🌲</div>
-  <div class="name-title" style="color:#fff; font-family:'Fredoka One'">Adını Gir!</div>
-  <input class="name-input" id="playerName" type="text" placeholder="Adın..." maxlength="16" style="padding:15px; border-radius:15px; font-size:20px; text-align:center; border:none; margin:20px">
-  <div style="display:flex;gap:12px">
-    <button class="back-btn" onclick="showScreen('titleScreen')">← Geri</button>
-    <button class="sbtn" style="font-size:20px;padding:13px 40px" onclick="goToChar()">Devam →</button>
-  </div>
-</div>
-
-<div id="charScreen" class="screen">
-  <div class="char-title">🎭 Karakterini Seç</div>
-  <div class="char-sub">Her karakterin farklı bir uzmanlık alanı vardır!</div>
-  <div id="goldLeafDisplay" style="color:#FFD60A; font-family:'Fredoka One'; margin-bottom:15px">🍃 Altın Yaprak: <span id="goldLeafAmt">0</span></div>
-  <div class="char-cards" id="charCards"></div>
-  <div style="margin-top:18px;display:flex;gap:12px">
-    <button class="back-btn" onclick="showScreen('nameScreen')">← Geri</button>
-    <button class="sbtn" style="font-size:20px;padding:13px 40px" onclick="showScreen('levelScreen')">Seviye Seç →</button>
-  </div>
-</div>
-
-<div id="levelScreen" class="screen">
-  <div class="level-title">🏕️ Seviye Seç</div>
-  <div class="level-cards">
-    <div class="lcard anaokulu" onclick="startGame('anaokulu')"><span class="lcard-icon">🐣</span><div class="lcard-name">Anaokulu</div><div class="lcard-desc">Kolay Sorular (3 Şık)</div></div>
-    <div class="lcard ilkokul" onclick="startGame('ilkokul')"><span class="lcard-icon">📚</span><div class="lcard-name">Ilkokul</div><div class="lcard-desc">Orta Zorluk (4 Şık)</div></div>
-    <div class="lcard ortaokul" onclick="startGame('ortaokul')"><span class="lcard-icon">🔥</span><div class="lcard-name">Ortaokul</div><div class="lcard-desc">Zor Sorular (4 Şık)</div></div>
-  </div>
-  <button class="back-btn" style="margin-top:22px" onclick="showScreen('charScreen')">← Geri</button>
-</div>
-
-<div id="gameScreen" class="screen">
-  <canvas id="gameCanvas" width="960" height="680"></canvas>
-  <div id="hud">
-    <div class="hb"><span class="hl">Puan</span><span class="hv" id="scoreD">0</span></div>
-    <div class="hb" id="heartsD">❤️❤️❤️</div>
-    <div id="oxyBar"><div id="oxyFill"></div></div>
-    <div class="hb"><span class="hl" id="lvlLbl">-</span></div>
-  </div>
-  <div id="toast"></div>
-</div>
-
-<div id="qOverlay">
-  <div class="qbox">
-    <div class="qtext" id="qText"></div>
-    <div class="qopts" id="qOpts"></div>
-  </div>
-</div>
-
-<div id="scoreboardScreen" class="screen"></div>
-<div id="goScreen" class="screen">
-    <div id="goTitle" style="font-size:48px; color:#ff6b35; font-family:'Fredoka One'">Süre Doldu!</div>
-    <div id="finScore" style="font-size:32px; color:#FFD60A; margin:20px">0 Puan</div>
-    <button class="sbtn" onclick="location.reload()">Tekrar Oyna</button>
-</div>
-
-</div></div><script>
-// ================================================================
-//  ORMANIM GÜVENDE PRO VERSION (Ahmet - Master Thesis Edition)
-// ================================================================
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
-const W=960,H=680,MW=1600,MH=1200;
-let gs=null,raf=null,lastT=0,curLevel='ilkokul',selChar=0,playerName='Ahmet';
-
-// ── RPG KARAKTER SİSTEMİ ──
-const CHARS=[
-  {
-    name:'Hızlı Çocuk', desc:'Hızı %25 fazla!', icon:'⚡',
-    stats: { speed: 1.25, power: 1.0, oxyEff: 1.0 },
-    skin:'#FDBCB4', hair:'#3a1a00', shirt:'#3a86ff', pants:'#1d3557', hat:'#2563d8', price:0
-  },
-  {
-    name:'İtfaiyeci', desc:'Yangın söndürme +%40', icon:'💧',
-    stats: { speed: 1.0, power: 1.4, oxyEff: 1.1 },
-    skin:'#C68642', hair:'#1a0a00', shirt:'#2dc653', pants:'#1b4332', hat:'#1da042', price:50
-  },
-  {
-    name:'Bilge Çevreci', desc:'Soru ipucu & Oksijen +', icon:'🧠',
-    stats: { speed: 0.9, power: 1.0, oxyEff: 1.5 },
-    skin:'#F1C27D', hair:'#1a0800', shirt:'#ffd60a', pants:'#7c5c00', hat:'#c9a800', price:100
-  }
-];
-
-const LEVELS={
-  anaokulu:{lives:5, speed:3.2, trashRate:0.003, fireRate:0.0003, qSet:'anaokulu', options:3},
-  ilkokul: {lives:3, speed:3.8, trashRate:0.006, fireRate:0.0007, qSet:'ilkokul', options:4},
-  ortaokul:{lives:3, speed:4.5, trashRate:0.010, fireRate:0.0014, qSet:'ortaokul', options:4}
-};
-
-// ── SORU HAVUZU (Dinamiğe Hazır) ──
-const QS={
+# Replace QS block entirely with 3/4 option mixed correct answers and explanations
+new_qs = """const QS={
   anaokulu:[
-    {t:'Geri dönüşüm kutusu ne renktir?', o:['Mavi','Kırmızı','Siyah'], c:0},
-    {t:'Ağaçlar ne üretir?', o:['Oksijen','Duman','Plastik'], c:0}
+    {t:'Ormanda yere çöp atarsak ne olur? 🌿',o:['Doğa kirlenir','Ağaçlar mutlu olur','Hiçbir şey olmaz'],c:0,ex:'Çöp doğayı kirletir ve hayvanlara zarar verebilir.'},
+    {t:'Ağaçlar bize ne verir? 🌳',o:['Oyuncak araba','Temiz hava','Plastik'],c:1,ex:'Ağaçlar oksijen üretir ve temiz hava sağlar.'},
+    {t:'Orman hayvanlar için nedir? 🐇',o:['Televizyon','Evi','Oyuncak'],c:1,ex:'Orman, birçok hayvanın yaşam alanıdır.'},
+    {t:'Ormanda ateş görürsek ne yapmalıyız? 🔥',o:['Yanına git','Üstüne kağıt at','Uzak durup büyüklere haber ver'],c:2,ex:'Ateşe yaklaşmadan yardım istemek en güvenli davranıştır.'},
+    {t:'Çöpleri nereye atmalıyız? 🗑️',o:['Yere','Çöp kutusuna','Ağaç dibine'],c:1,ex:'Çöpler doğru yere atılırsa orman temiz kalır.'},
+    {t:'Çiçekleri koparmak yerine ne yapmalıyız? 🌸',o:['Yerinde bırakmalıyız','Hepsini toplamalıyız','Üstüne basmalıyız'],c:0,ex:'Doğadaki bitkiler yerinde güzel ve faydalıdır.'},
+    {t:'Hayvanları korkutmak doğru mu? 🐦',o:['Evet','Hayır','Bazen'],c:1,ex:'Hayvanları korkutmak onları strese sokar.'},
+    {t:'Ağaç dikmek neden güzeldir? 🌱',o:['Ormanı azaltır','Doğayı korur','Hayvanları kaçırır'],c:1,ex:'Yeni ağaçlar doğayı güçlendirir ve temiz hava sağlar.'},
+    {t:'Ormanlar kimin evidir? 🏡',o:['Sadece insanların','Hayvanların ve bitkilerin','Sadece arabaların'],c:1,ex:'Ormanda birçok canlı birlikte yaşar.'},
+    {t:'Cam şişe görünce ne yapmalıyız? 🍾',o:['Tekme atmalıyız','Büyüklere haber vermeliyiz','Olduğu yerde bırakmalıyız'],c:1,ex:'Cam şişeler tehlikeli olabilir; güvenli şekilde kaldırılmalıdır.'},
   ],
   ilkokul:[
-    {t:'Hangisi orman yangınlarının en büyük sebebidir?', o:['İnsan İhmali','Kutup Ayıları','Yağmur','Yıldızlar'], c:0}
+    {t:'Ormanları korumak için ne yapmalıyız? 🌲',o:['Çöp atmamalıyız','Dalları kırmalıyız','Ateşi açık bırakmalıyız','Ağaçlara zarar vermeliyiz'],c:0,ex:'Çöp atmamak ve temiz bırakmak ormanı korur.'},
+    {t:'Piknikten sonra ateşi neden söndürmeliyiz? 🏕️',o:['Daha çok duman çıksın diye','Yangın çıkmaması için','Eğlenceli olduğu için','Yemek daha hızlı pişsin diye'],c:1,ex:'Sönmeyen ateş büyük orman yangınlarına neden olabilir.'},
+    {t:'Ormanlar en çok hangi canlılar için önemlidir? 🦊',o:['Sadece binalar','Hayvanlar ve bitkiler','Sadece arabalar','Sadece oyuncaklar'],c:1,ex:'Ormanlar birçok canlı için yaşam alanıdır.'},
+    {t:'Plastik atıklar doğaya zarar verebilir mi? 🛍️',o:['Evet','Hayır','Sadece kışın','Sadece şehirde'],c:0,ex:'Plastik çok geç yok olur ve çevreye zarar verir.'},
+    {t:'Ağaçlar havaya ne kazandırır? 🌬️',o:['Daha çok çöp','Daha çok duman','Daha temiz hava','Daha çok gürültü'],c:2,ex:'Ağaçlar oksijen üretir ve havayı temizler.'},
+    {t:'Sigara izmariti atmak neden tehlikelidir? 🚬',o:['Yağmur yağdırır','Yangına neden olabilir','Ağaçları sular','Toprağı büyütür'],c:1,ex:'Küçük bir kıvılcım bile büyük yangın başlatabilir.'},
+    {t:'Geri dönüşüm ormanların korunmasına yardımcı olur mu? ♻️',o:['Hayır','Bazen zarar verir','Sadece okulda işe yarar','Evet'],c:3,ex:'Geri dönüşüm sayesinde daha az ham madde kullanılır.'},
+    {t:'Hangisi orman dostu davranıştır? 🌿',o:['Çöpleri bırakmak','Ağaç kabuklarını koparmak','Fidan dikmek','Cam bırakmak'],c:2,ex:'Fidan dikmek doğaya katkı sağlayan örnek bir davranıştır.'},
+    {t:'Orman yangını gördüğümüzde ne yapmalıyız? 🔥',o:['Gizlemeliyiz','Yetkililere haber vermeliyiz','Yanına yaklaşmalıyız','Fotoğraf çekip beklemeliyiz'],c:1,ex:'Hızlı haber vermek yangının büyümesini engelleyebilir.'},
+    {t:'Ormanlar toprağı nasıl korur? 🏔️',o:['Toprağı yakar','Toprağı yok eder','Erozyonu azaltır','Toprağı kaydırır'],c:2,ex:'Ağaç kökleri toprağın yerinde kalmasına yardım eder.'},
   ],
   ortaokul:[
-    {t:'Fotosentez ormanlar için neden kritiktir?', o:['CO2 dengesi sağlar','Sıcaklığı artırır','Ağaçları kurutur','Gölge yapar'], c:0}
-  ]
-};
+    {t:'Ormansızlaşmanın sonuçlarından biri nedir? 🌍',o:['Havanın tamamen temizlenmesi','Yaşam alanlarının azalması','Su kaynaklarının artması','Yangın riskinin bitmesi'],c:1,ex:'Ağaçların azalması birçok canlının yaşam alanını yok eder.'},
+    {t:'Orman yangınlarının en yaygın sebebi nedir? 🔥',o:['İnsan ihmali','Kar yağışı','Toprağın verimli olması','Gece olması'],c:0,ex:'İzmarit, kontrolsüz ateş ve cam atıklar başlıca nedenlerdendir.'},
+    {t:'Ormanların iklim üzerindeki etkisi nedir? 🌡️',o:['İklimi etkilemez','Sadece hayvanları etkiler','Karbon döngüsünü dengeler','Yağmuru tamamen durdurur'],c:2,ex:'Ormanlar karbon depolar ve iklim dengesine katkı sağlar.'},
+    {t:'Ormanlar biyolojik çeşitlilik açısından neden önemlidir? 🦋',o:['Çünkü tek tür yaşar','Çünkü birçok canlıya yaşam alanı sunar','Çünkü sadece insanlar kullanır','Çünkü toprağı yok eder'],c:1,ex:'Ormanlar farklı türlerin birlikte yaşadığı karmaşık ekosistemlerdir.'},
+    {t:'Geri dönüşümün ormanlara katkısı nedir? ♻️',o:['Daha çok ağaç kesilir','Kağıt için daha az ağaç kesilir','Yangınları artırır','Toprağı verimsiz yapar'],c:1,ex:'Atık kağıdın geri dönüşümü yeni ağaç kesimini azaltır.'},
+    {t:'Hangisi sürdürülebilir davranıştır? 🌱',o:['Rastgele ağaç kesmek','Atıkları doğaya bırakmak','Kontrollü ağaçlandırma','Ateşi açık bırakmak'],c:2,ex:'Planlı ağaçlandırma doğayı koruyarak kullanım sağlar.'},
+    {t:'Ormanların yok olması hangi riski artırabilir? ⛰️',o:['Erozyon','Temiz hava miktarı','Su tutma kapasitesi','Canlı çeşitliliği'],c:0,ex:'Ağaç kökleri olmadığında toprak daha kolay taşınır.'},
+    {t:'Ormanlar su döngüsüne nasıl katkı sağlar? 💧',o:['Nemi ve yağış dengesini destekler','Yağışı tamamen engeller','Nehirleri kurutur','Bulutları yok eder'],c:0,ex:'Bitkiler terleme yoluyla atmosferdeki nem dengesine katkı sağlar.'},
+    {t:'Cam ve plastik bırakmak neden tehlikelidir? 🍾',o:['Çünkü çevreye zarar vermez','Çünkü sadece görüntüyü bozar','Çünkü yangın ve kirlilik riski oluşturur','Çünkü hayvanlara yiyecek olur'],c:2,ex:'Cam güneşi odaklayabilir, plastik ise uzun süre doğada kalır.'},
+    {t:'Bireyler ormanları korumak için ne yapabilir? 🙌',o:['Ateşi kontrolsüz bırakmak','Atıkları doğru şekilde toplamak','Ağaçlara zarar vermek','Yangını gizlemek'],c:1,ex:'Bireysel sorumluluk büyük çevresel etkiler oluşturur.'},
+  ],
+};"""
+html = re.sub(r"const QS=\{[\s\S]*?\n\};\n\n// ── TREES ──", new_qs+"\n\n// ── TREES ──", html, count=1)
 
-// ── AKILLI SPAWN SİSTEMİ (Çakışma Önleyici) ──
-function getSafeSpawnPos(minDist = 80) {
-  let attempts = 0;
-  while (attempts < 30) {
-    let rx = 100 + Math.random() * (MW - 200);
-    let ry = 100 + Math.random() * (MH - 200);
-    let tooClose = gs.trees.some(t => Math.hypot(rx - t.x, ry - t.y) < minDist);
-    if (!tooClose) return {x:rx, y:ry};
-    attempts++;
+# Insert helper functions before initGS
+helpers = """
+function getSelectedChar(){return CHARS[selChar]||CHARS[0];}
+function getCharPerks(){return getSelectedChar().perks||{};}
+function getPlayerSpeedMultiplier(){return getCharPerks().speedMul||1;}
+function getPlayerExtinguishMultiplier(){return getCharPerks().extinguishMul||1;}
+function getPlayerOxygenMultiplier(){return getCharPerks().oxygenMul||1;}
+function getPlayerEcoBonus(){return getCharPerks().ecoBonus||0;}
+function hasQuestionHint(){return !!getCharPerks().hint;}
+function isBlockedZone(x,y,pad=0){
+  for(const t of gs.trees){
+    const cs=t.grown?t.s:t.growPct*t.s;
+    const tr=((t.collR||18)*cs)+pad;
+    if(Math.hypot(x-t.x,y-t.y)<tr)return true;
   }
-  return {x: Math.random()*MW, y: Math.random()*MH};
-}
-
-// ── GAME INIT ──
-function initGS(level){
-  const cfg=LEVELS[level];
-  const charStats = CHARS[selChar].stats;
-  return{
-    level, cfg, score:0, lives:cfg.lives, oxygen:100,
-    timeLeft:120, charStats, cam:{x:MW/2-W/2, y:MH/2-H/2},
-    player:{wx:MW/2, wy:MH/2, dir:1, step:0, isMoving:false, holdingPump:false, waterParts:[], activeEffects:{}},
-    trees:genTrees(), trash:[], fires:[], effects:[], wind:{active:false, angle:0, timer:0},
-    keys:{}, qUsed:[], nextQTimer:10
-  };
-}
-
-function genTrees(){
-    let ts = [];
-    for(let i=0; i<40; i++) ts.push({x:Math.random()*MW, y:Math.random()*MH, s:0.8+Math.random()*0.5, v:Math.floor(Math.random()*3), grown:true});
-    return ts;
-}
-
-function update(dt){
-  if(gs.paused) return;
-  const p=gs.player, cfg=gs.cfg, st=gs.charStats;
-  
-  // Hareket (RPG Hız Etkisi)
-  let mx=0, my=0;
-  if(gs.keys['ArrowLeft']||gs.keys['a']) mx=-1;
-  if(gs.keys['ArrowRight']||gs.keys['d']) mx=1;
-  if(gs.keys['ArrowUp']||gs.keys['w']) my=-1;
-  if(gs.keys['ArrowDown']||gs.keys['s']) my=1;
-  
-  if(mx!==0 || my!==0){
-    const spd = cfg.speed * st.speed * 60 * dt;
-    p.wx += mx * spd; p.wy += my * spd;
-    p.dir = mx !== 0 ? mx : p.dir;
-    p.isMoving = true; p.step += dt * 10;
-  } else { p.isMoving = false; }
-
-  // Rüzgar ve Yangın Yayılımı
-  updateWind(dt);
-  gs.fires.forEach(f => {
-    f.hp -= (p.holdingPump ? st.power : 0) * dt * 50; // RPG Söndürme Gücü
-    if(gs.wind.active && Math.random() < 0.001){ // Rüzgar yönünde yayılma
-        let pos = {x: f.x + Math.cos(gs.wind.angle)*100, y: f.y + Math.sin(gs.wind.angle)*100};
-        spawnFire(pos.x, pos.y);
-    }
-  });
-
-  // Oksijen Tüketimi (RPG Verimlilik Etkisi)
-  gs.oxygen -= (0.01 / st.oxyEff);
-  
-  // Kamera Takibi
-  gs.cam.x += (p.wx - W/2 - gs.cam.x) * 0.1;
-  gs.cam.y += (p.wy - H/2 - gs.cam.y) * 0.1;
-
-  if(gs.oxygen <= 0) endGame();
-  updateHUD();
-}
-
-function updateWind(dt){
-    gs.wind.timer -= dt;
-    if(gs.wind.timer <= 0){
-        gs.wind.active = !gs.wind.active;
-        gs.wind.timer = gs.wind.active ? 5 : 15;
-        gs.wind.angle = Math.random() * Math.PI * 2;
-    }
-}
-
-function spawnFire(x, y){
-    if(gs.fires.length > 10) return;
-    gs.fires.push({x, y, hp:100});
-}
-
-// ── SORU SİSTEMİ (Dinamik Karıştırma) ──
-function showQuestion(){
-  gs.paused = true;
-  const pool = QS[gs.cfg.qSet];
-  const qRaw = pool[Math.floor(Math.random()*pool.length)];
-  
-  // Şıkları Karıştır (Fisher-Yates)
-  let indices = qRaw.o.map((_,i)=>i);
-  for(let i=indices.length-1; i>0; i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
+  for(const tr of gs.trash||[]){
+    if(Math.hypot(x-tr.x,y-tr.y)<26+pad)return true;
   }
-  
-  const qText = document.getElementById('qText');
-  const qOpts = document.getElementById('qOpts');
-  qText.textContent = qRaw.t;
-  qOpts.innerHTML = '';
-  
-  indices.forEach(idx => {
-      const btn = document.createElement('button');
-      btn.className = 'qbtn';
-      btn.textContent = qRaw.o[idx];
-      btn.onclick = () => {
-          if(idx === qRaw.c){ btn.classList.add('correct'); gs.score += 50; }
-          else { btn.classList.add('wrong'); gs.lives--; }
-          setTimeout(() => { gs.paused = false; document.getElementById('qOverlay').classList.remove('active'); }, 1000);
-      };
-      qOpts.appendChild(btn);
+  for(const f of gs.fires||[]){
+    if(Math.hypot(x-f.x,y-f.y)<42+pad)return true;
+  }
+  for(const pa of gs.plantAnims||[]){
+    if(Math.hypot(x-pa.x,y-pa.y)<40+pad)return true;
+  }
+  return false;
+}
+function findSafeSpawn(minDistFromPlayer=80, treePad=54, plantPad=88, tries=120){
+  const p=gs?.player||{wx:MW/2,wy:MH/2};
+  for(let i=0;i<tries;i++){
+    const x=80+Math.random()*(MW-160);
+    const y=80+Math.random()*(MH-160);
+    if(Math.hypot(x-p.wx,y-p.wy)<minDistFromPlayer) continue;
+    let bad=false;
+    for(const t of gs.trees){
+      const cs=t.grown?t.s:t.growPct*t.s;
+      const base=((t.collR||18)*cs);
+      const pad=t.newTree?plantPad:treePad;
+      if(Math.hypot(x-t.x,y-t.y)<base+pad){bad=true;break;}
+    }
+    if(bad) continue;
+    if((gs.trash||[]).some(tr=>Math.hypot(x-tr.x,y-tr.y)<48)) continue;
+    if((gs.fires||[]).some(f=>Math.hypot(x-f.x,y-f.y)<70)) continue;
+    return {x,y};
+  }
+  return {x:80+Math.random()*(MW-160),y:80+Math.random()*(MH-160)};
+}
+function shuffleQuestion(q){
+  const arr=q.o.map((opt,i)=>({opt,i}));
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return {...q,o:arr.map(v=>v.opt),c:arr.findIndex(v=>v.i===q.c)};
+}
+"""
+html = html.replace("// ── INIT ──", helpers+"\n// ── INIT ──", 1)
+
+# Modify initGS
+html = html.replace("  const cfg=LEVELS[level];\n  const qArr=[...QS[level]].sort(()=>Math.random()-.5);",
+                    "  const cfg=LEVELS[level];\n  const qArr=[...QS[level]].map(shuffleQuestion).sort(()=>Math.random()-.5);\n  const char=getSelectedChar();")
+html = html.replace("    player:{wx:MW/2,wy:MH/2,dir:1,step:0,isMoving:false,\n      holdingFidan:false,holdingPump:false,pumpAnim:0,\n      waterParts:[],speedTrail:[],recoilX:0,activeEffects:{}},",
+                    "    player:{wx:MW/2,wy:MH/2,dir:1,step:0,isMoving:false,\n      holdingFidan:false,holdingPump:false,pumpAnim:0,\n      waterParts:[],speedTrail:[],recoilX:0,activeEffects:{}, charId:selChar, charName:char.name, stats:char.stats, perks:char.perks},")
+# update movement spd
+html = html.replace("  const spd=cfg.speed*60*dt*oxyF*(hasSpeed?1.5:1);",
+                    "  const spd=cfg.speed*60*dt*oxyF*getPlayerSpeedMultiplier()*(hasSpeed?1.5:1);")
+# oxygen drains
+html = html.replace("    gs.oxygen=Math.max(0,gs.oxygen-.0004*60*dt);",
+                    "    gs.oxygen=Math.max(0,gs.oxygen-.0004*60*dt/getPlayerOxygenMultiplier());")
+html = html.replace("    gs.oxygen=Math.max(0,gs.oxygen-.005*60*dt*(1+f.age/15));",
+                    "    gs.oxygen=Math.max(0,gs.oxygen-.005*60*dt*(1+f.age/15)/getPlayerOxygenMultiplier());")
+# fire damage
+html = html.replace("      const dmg=(hasPump?140:70)*(isRaining?2:1);",
+                    "      const dmg=(hasPump?140:70)*getPlayerExtinguishMultiplier()*(isRaining?2:1);")
+# eco bonus when fire extinguished
+html = html.replace("        gs.score+=30;gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=3;",
+                    "        gs.score+=30+getPlayerEcoBonus();gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=3;")
+# fire kit bonus
+html = html.replace("      gs.fidan++;gs.score+=30;gs.goldEarned+=2;",
+                    "      gs.fidan++;gs.score+=30+getPlayerEcoBonus();gs.goldEarned+=2;")
+# Spawn trash function replace
+html = re.sub(r"function spawnTrash\(\)\{\n  // types: 0=plastic bag, 1=plastic bottle, 2=cardboard, 3=paper, 4=can, 5=glass bottle\n  const type=Math\.floor\(Math\.random\(\)\*6\);\n  gs\.trash\.push\(\{x:80\+Math\.random\(\)\*\(MW-160\),y:80\+Math\.random\(\)\*\(MH-160\),type,age:0,onFire:false\}\);\n\}",
+r"""function spawnTrash(){
+  const type=Math.floor(Math.random()*6);
+  const pos=findSafeSpawn(110,60,92,180);
+  gs.trash.push({x:pos.x,y:pos.y,type,age:0,onFire:false});
+}""", html, count=1)
+# plantSapling add cleanup around new tree
+html = re.sub(r"function plantSapling\(x,y\)\{\n  gs\.plantAnims\.push\(\{x,y,t:0\}\);\n  setTimeout\(\(\)=>\{if\(gs\)gs\.trees\.push\(\{x,y,s:\.55\+Math\.random\(\)\*\.35,v:Math\.floor\(Math\.random\(\)\*3\),grown:false,growPct:0,newTree:true,collR:12\}\);\},400\);\n\}",
+r"""function plantSapling(x,y){
+  gs.plantAnims.push({x,y,t:0});
+  gs.trash=gs.trash.filter(tr=>Math.hypot(tr.x-x,tr.y-y)>92);
+  setTimeout(()=>{
+    if(gs){
+      gs.trees.push({x,y,s:.55+Math.random()*.35,v:Math.floor(Math.random()*3),grown:false,growPct:0,newTree:true,collR:12});
+      gs.trash=gs.trash.filter(tr=>Math.hypot(tr.x-x,tr.y-y)>96);
+    }
+  },400);
+}""", html, count=1)
+# spawnFireNear use safe spawn visible-ish
+html = re.sub(r"function spawnFireNear\(px,py\)\{\n  const ang=Math\.random\(\)\*Math\.PI\*2;\n  const dist=100\+Math\.random\(\)\*250; // within ~250 world px of player\n  spawnFire\(\n    Math\.max\(80,Math\.min\(MW-80,px\+Math\.cos\(ang\)\*dist\)\),\n    Math\.max\(80,Math\.min\(MH-80,py\+Math\.sin\(ang\)\*dist\)\)\n  \);\n\}",
+r"""function spawnFireNear(px,py){
+  for(let i=0;i<40;i++){
+    const ang=Math.random()*Math.PI*2;
+    const dist=120+Math.random()*220;
+    const x=Math.max(80,Math.min(MW-80,px+Math.cos(ang)*dist));
+    const y=Math.max(80,Math.min(MH-80,py+Math.sin(ang)*dist));
+    if(!isBlockedZone(x,y,28)){spawnFire(x,y);return;}
+  }
+  const pos=findSafeSpawn(120,60,90,120);
+  spawnFire(pos.x,pos.y);
+}""", html, count=1)
+# update wrong answer fire spawn to use spawnFireNear
+html = html.replace("      const ang=Math.random()*Math.PI*2,dist2=150+Math.random()*200;\n      spawnFire(\n        Math.max(80,Math.min(MW-80,p.wx+Math.cos(ang)*dist2)),\n        Math.max(80,Math.min(MH-80,p.wy+Math.sin(ang)*dist2))\n      );",
+                    "      spawnFireNear(p.wx,p.wy);")
+# showQuestion replace
+html = re.sub(r"function showQuestion\(\)\{\n  gs\.questionActive=true;gs\.paused=true;\n  const q=nextQ\(\);gs\.currentQ=q;\n  document\.getElementById\('qText'\)\.textContent=q\.t;\n  const opts=document\.getElementById\('qOpts'\);opts\.innerHTML='';opts\.className='qopts '\+\(q\.o\.length===2\?'one':'two'\);\n  q\.o\.forEach\(\(opt,i\)=>\{const b=document\.createElement\('button'\);b\.className='qbtn';b\.textContent=opt;b\.onclick=\(\)=>answerQ\(i,b\);opts\.appendChild\(b\);\}\);\n  document\.getElementById\('qOverlay'\)\.classList\.add\('active'\);\n\}",
+r"""function showQuestion(){
+  gs.questionActive=true;gs.paused=true;
+  const q=shuffleQuestion(nextQ());gs.currentQ=q;
+  document.getElementById('qText').textContent=q.t;
+  const explain=document.getElementById('qExplain');
+  explain.className=''; explain.style.display='none'; explain.textContent='';
+  const opts=document.getElementById('qOpts');opts.innerHTML='';opts.className='qopts two';
+  q.o.forEach((opt,i)=>{
+    const b=document.createElement('button');
+    b.className='qbtn';
+    b.textContent=String.fromCharCode(65+i)+') '+opt;
+    b.onclick=()=>answerQ(i,b);
+    opts.appendChild(b);
   });
+  if(hasQuestionHint() && q.o.length>=3){
+    const wrongIndexes=q.o.map((_,i)=>i).filter(i=>i!==q.c);
+    const hideIndex=wrongIndexes[Math.floor(Math.random()*wrongIndexes.length)];
+    const hintBtn=opts.children[hideIndex];
+    if(hintBtn){
+      hintBtn.style.opacity='.35';
+      hintBtn.style.filter='grayscale(.5)';
+      hintBtn.disabled=true;
+      hintBtn.textContent='💡 İpucu ile elendi';
+    }
+  }
   document.getElementById('qOverlay').classList.add('active');
-}
-
-// ── UI & RENDER (Simplified for Demo) ──
-function drawPlayer(){
-    const s = {x: gs.player.wx - gs.cam.x, y: gs.player.wy - gs.cam.y};
-    ctx.fillStyle = CHARS[selChar].shirt;
-    ctx.fillRect(s.x-15, s.y-40, 30, 40); // Basit karakter çizimi
-}
-
-function render(){
-    ctx.fillStyle = '#2d6a4f'; ctx.fillRect(0,0,W,H); // Zemin
-    gs.trees.forEach(t => {
-        ctx.fillStyle='#1b4332'; ctx.beginPath(); 
-        ctx.arc(t.x-gs.cam.x, t.y-gs.cam.y, 20*t.s, 0, Math.PI*2); ctx.fill();
+}""", html, count=1)
+# answerQ replace
+html = re.sub(r"function answerQ\(idx,btn\)\{\n  const q=gs\.currentQ;document\.querySelectorAll\('\.qbtn'\)\.forEach\(b=>b\.onclick=null\);\n  if\(idx===q\.c\)\{\n    btn\.classList\.add\('correct'\);gs\.score\+=20;gs\.oxygen=Math\.min\(100,gs\.oxygen\+5\);\n    playSound\('correct'\);showToast\('🎉 Dogru! \+20 puan, \+5 oksijen!','#52b788'\);\n  \}else\{\n    btn\.classList\.add\('wrong'\);const all=document\.querySelectorAll\('\.qbtn'\);if\(all\[q\.c\]\)all\[q\.c\]\.classList\.add\('correct'\);\n    gs\.lives=Math\.max\(0,gs\.lives-1\);gs\.oxygen=Math\.max\(0,gs\.oxygen-10\);\n    playSound\('wrong'\);showToast\('❌ Yanlis! -10 oksijen, yangın geliyor!','#e63946'\);\n    updateHUD\(\);triggerShake\(\.6\);\n    gs\.wrongFirePending=true;gs\.wrongFireDelay=2\.0;\n  \}\n  setTimeout\(\(\)=>\{\n    document\.getElementById\('qOverlay'\)\.classList\.remove\('active'\);\n    gs\.questionActive=false;gs\.paused=false;\n    if\(gs\.lives<=0\|\|gs\.oxygen<=0\)endGame\('dead'\);\n  \},1500\);\n\}",
+r"""function answerQ(idx,btn){
+  const q=gs.currentQ;
+  document.querySelectorAll('.qbtn').forEach(b=>{b.onclick=null;b.disabled=true;});
+  const explain=document.getElementById('qExplain');
+  if(idx===q.c){
+    btn.classList.add('correct');
+    gs.score+=20+Math.round(getPlayerEcoBonus()/2);
+    gs.oxygen=Math.min(100,gs.oxygen+5);
+    playSound('correct');
+    showToast('🎉 Doğru! +20 puan, +5 oksijen!','#52b788');
+    explain.textContent='✅ Doğru cevap. '+(q.ex||'Harika!');
+  }else{
+    btn.classList.add('wrong');
+    const all=document.querySelectorAll('.qbtn');
+    if(all[q.c])all[q.c].classList.add('correct');
+    gs.lives=Math.max(0,gs.lives-1);
+    gs.oxygen=Math.max(0,gs.oxygen-10);
+    playSound('wrong');
+    showToast('❌ Yanlış! -10 oksijen, yangın geliyor!','#e63946');
+    updateHUD();triggerShake(.6);
+    gs.wrongFirePending=true;gs.wrongFireDelay=2.0;
+    explain.textContent='ℹ️ Açıklama: '+(q.ex||'Doğru davranışı öğrenelim.');
+  }
+  explain.className='show';
+  explain.style.display='block';
+  setTimeout(()=>{
+    document.getElementById('qOverlay').classList.remove('active');
+    gs.questionActive=false;gs.paused=false;
+    if(gs.lives<=0||gs.oxygen<=0)endGame('dead');
+  },2200);
+}""", html, count=1)
+# updateHUD append perk hud
+html = html.replace("function updateHUD(){if(!gs)return;let h='';for(let i=0;i<gs.lives;i++)h+='❤️';document.getElementById('heartsD').textContent=h||'💀';}",
+                    """function updateHUD(){if(!gs)return;let h='';for(let i=0;i<gs.lives;i++)h+='❤️';document.getElementById('heartsD').textContent=h||'💀';
+const C=getSelectedChar();const perk=document.getElementById('charPerkHud');if(perk)perk.textContent='🎭 '+C.name.replace('\\n',' ')+' • '+C.ability.replace(/^[^ ]+ /,'');}""")
+# buildCharSelect replace to include ability/stats
+html = re.sub(r"function buildCharSelect\(\)\{[\s\S]*?\n\}\nfunction drawCharPrev",
+r"""function buildCharSelect(){
+  const unlocked=getUnlocked(),gold=getGold();
+  const cards=document.getElementById('charCards');cards.innerHTML='';
+  const statMeta=[
+    ['Hız','speed'],
+    ['Söndür','extinguish'],
+    ['Oksijen','oxygen'],
+    ['Eko','eco']
+  ];
+  CHARS.forEach((C,i)=>{
+    const isU=unlocked.includes(i);
+    const div=document.createElement('div');
+    div.className='char-card'+(i===selChar&&isU?' selected':'')+(isU?'':' locked');
+    div.onclick=()=>{
+      if(isU){selChar=i;buildCharSelect();}
+      else if(gold>=C.price&&spendGold(C.price)){unlockChar(i);selChar=i;document.getElementById('goldLeafAmt').textContent=getGold();buildCharSelect();showToast(`🎉 ${C.name.replace('\\n',' ')} kilidi açıldı!`,'#FFD60A');}
+      else showToast(`❌ Yeterli Altın Yaprak yok! (${C.price} 🍃 gerekli)`,'#e63946');
+    };
+    if(!isU){
+      const lk=document.createElement('div');lk.className='lock-badge';lk.textContent='🔒';div.appendChild(lk);
+      const pr=document.createElement('div');pr.className='price-badge';pr.textContent=`${C.price} 🍃`;div.appendChild(pr);
+    }
+    const cv=document.createElement('canvas');cv.width=90;cv.height=112;cv.style.display='block';cv.style.margin='0 auto';div.appendChild(cv);drawCharPrev(cv,C);
+    const nm=document.createElement('div');nm.className='char-name';nm.textContent=C.name.replace('\\n',' ');
+    const ds=document.createElement('div');ds.className='char-desc';ds.textContent=C.desc;
+    const ab=document.createElement('div');ab.className='char-ability';ab.textContent=C.ability;
+    const sw=document.createElement('div');sw.className='stat-wrap';
+    statMeta.forEach(([label,key])=>{
+      const row=document.createElement('div');row.className='stat-row';
+      row.innerHTML=`<div class="stat-label">${label}</div><div class="stat-bar"><div class="stat-fill" style="width:${C.stats[key]}%"></div></div>`;
+      sw.appendChild(row);
     });
-    gs.fires.forEach(f => {
-        ctx.font = "30px Arial"; ctx.fillText("🔥", f.x-gs.cam.x-15, f.y-gs.cam.y);
-    });
-    drawPlayer();
+    div.appendChild(nm);div.appendChild(ds);div.appendChild(ab);div.appendChild(sw);cards.appendChild(div);
+  });
 }
+function drawCharPrev""", html, count=1)
 
-function loop(ts){
-    let dt = (ts - lastT)/1000; lastT=ts;
-    update(dt); render();
-    raf = requestAnimationFrame(loop);
-}
+# drawCharacter use selected C and legLen armLen more distinct
+html = html.replace("  const bw=C.bodyW||22,hr=C.headR||14,fat=C.fatness||1;", "  const bw=C.bodyW||22,hr=C.headR||14,fat=C.fatness||1;")
+html = html.replace("  const legLen=C.shortLegs?16:20;", "  const legLen=C.legLen||(C.shortLegs?16:20); const armLen=C.armLen||15;")
+html = html.replace("    ctx.save();ctx.translate(-(bw/2+4),-1+bob);ctx.rotate(-.65);ctx.beginPath();ctx.roundRect(-3.5,0,7,16,3);ctx.fill();ctx.restore();\n    ctx.save();ctx.translate(bw/2+4,-1+bob);ctx.rotate(.65);ctx.beginPath();ctx.roundRect(-3.5,0,7,16,3);ctx.fill();ctx.restore();",
+                    "    ctx.save();ctx.translate(-(bw/2+4),-1+bob);ctx.rotate(-.65);ctx.beginPath();ctx.roundRect(-3.5,0,7,armLen+1,3);ctx.fill();ctx.restore();\n    ctx.save();ctx.translate(bw/2+4,-1+bob);ctx.rotate(.65);ctx.beginPath();ctx.roundRect(-3.5,0,7,armLen+1,3);ctx.fill();ctx.restore();")
+html = html.replace("    ctx.save();ctx.translate(-(bw/2+4),-1+bob);ctx.rotate(as);ctx.beginPath();ctx.roundRect(-3.5,0,7,15,3);ctx.fill();ctx.restore();\n    ctx.save();ctx.translate(bw/2+4,-1+bob);ctx.rotate(-as);ctx.beginPath();ctx.roundRect(-3.5,0,7,15,3);ctx.fill();ctx.restore();",
+                    "    ctx.save();ctx.translate(-(bw/2+4),-1+bob);ctx.rotate(as);ctx.beginPath();ctx.roundRect(-3.5,0,7,armLen,3);ctx.fill();ctx.restore();\n    ctx.save();ctx.translate(bw/2+4,-1+bob);ctx.rotate(-as);ctx.beginPath();ctx.roundRect(-3.5,0,7,armLen,3);ctx.fill();ctx.restore();")
 
-function startGame(lvl){
-    curLevel = lvl; gs = initGS(lvl);
-    showScreen('gameScreen');
-    lastT = performance.now();
-    loop(lastT);
-}
-
-function showScreen(id){
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-
-function buildCharSelect(){
-    const container = document.getElementById('charCards');
-    container.innerHTML = '';
-    CHARS.forEach((c, i) => {
-        const card = document.createElement('div');
-        card.className = `char-card ${selChar === i ? 'selected' : ''}`;
-        card.innerHTML = `
-            <div style="font-size:40px">${c.icon}</div>
-            <div style="font-weight:bold; color:#fff">${c.name}</div>
-            <div class="ability-badge">${c.desc}</div>
-            <div class="char-stats">
-                <div class="stat-row"><span class="stat-lbl">Hız</span><div class="stat-bar"><div class="stat-fill" style="width:${c.stats.speed*60}%"></div></div></div>
-                <div class="stat-row"><span class="stat-lbl">Güç</span><div class="stat-bar"><div class="stat-fill" style="width:${c.stats.power*60}%"></div></div></div>
-            </div>
-        `;
-        card.onclick = () => { selChar = i; buildCharSelect(); };
-        container.appendChild(card);
-    });
-}
-
-function updateHUD(){
-    document.getElementById('scoreD').textContent = Math.floor(gs.score);
-    document.getElementById('oxyFill').style.width = gs.oxygen + "%";
-    let h = ""; for(let i=0; i<gs.lives; i++) h += "❤️";
-    document.getElementById('heartsD').textContent = h;
-}
-
-function endGame(){ gs.paused = true; showScreen('goScreen'); document.getElementById('finScore').textContent = Math.floor(gs.score) + " Puan"; }
-
-function goToChar(){ playerName = document.getElementById('playerName').value || 'Ahmet'; buildCharSelect(); showScreen('charScreen'); }
-
-window.addEventListener('keydown', e => { if(gs) gs.keys[e.key] = true; });
-window.addEventListener('keyup', e => { if(gs) gs.keys[e.key] = false; });
-</script>
-</body>
-</html>
+# Add default HUD update on game start maybe already.
+# Save file
+out=Path('/mnt/data/index_updated_tubitak.html')
+out.write_text(html, encoding='utf-8')
+print(out, len(html))
