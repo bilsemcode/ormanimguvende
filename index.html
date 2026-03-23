@@ -165,8 +165,8 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 #toast{position:absolute;top:112px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:8px 20px;border-radius:20px;font-weight:700;font-size:13px;z-index:300;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;max-width:85%;text-align:center}
 #toast.show{opacity:1}
 /* BADGE */
-#badgePop{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:linear-gradient(135deg,#FFD60A,#ff6b35);color:#fff;padding:16px 28px;border-radius:20px;text-align:center;z-index:249;pointer-events:none;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 10px 40px rgba(0,0,0,.4)}
-#badgePop.show{transform:translate(-50%,-50%) scale(1)}
+#badgePop{position:absolute;top:58px;right:14px;transform:translateX(120%) scale(0);transform-origin:top right;background:linear-gradient(135deg,#FFD60A,#ff6b35);color:#fff;padding:8px 14px;border-radius:14px;z-index:249;pointer-events:none;transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;white-space:nowrap;max-width:220px}
+#badgePop.show{transform:translateX(0) scale(1)}
 </style>
 </head>
 <body>
@@ -267,9 +267,11 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
   </div>
   <div id="toast"></div>
   <div id="badgePop">
-    <span id="bIcon" style="font-size:36px;display:block">🏅</span>
-    <div id="bName" style="font-family:'Fredoka One',cursive;font-size:16px;margin-top:4px"></div>
-    <div id="bDesc" style="font-size:11px;opacity:.9"></div>
+    <span id="bIcon" style="font-size:22px;flex-shrink:0">🏅</span>
+    <div>
+      <div id="bName" style="font-family:'Fredoka One',cursive;font-size:13px;line-height:1.2"></div>
+      <div id="bDesc" style="font-size:10px;opacity:.9"></div>
+    </div>
   </div>
 </div>
 
@@ -384,7 +386,7 @@ const CHARS=[
   },
   {
     // Genç kız - çiçekli yeşil kıyafet, örgülü saç, doğa sırt çantası
-    name:'Doga\nSevdalisi', desc:'Oksijen uzmani!',
+    name:'Doga\nSevdalısı', desc:'Oksijen uzmanı!',
     ability:'🌿 Fidan +15 puan',abilityId:'eco',
     stats:{speed:3,extinguish:3,oxygen:5,eco:5},
     skin:'#FDBCB4',hair:'#c0392b',shirt:'#27ae60',pants:'#1e8449',hat:'#1a5e38',
@@ -393,7 +395,7 @@ const CHARS=[
   },
   {
     // İri yapılı, sakallı ormancı - turuncu yelek, baret
-    name:'Cesur\nOrmanci', desc:'Yangin ustasi!',
+    name:'Cesur\nOrmancı', desc:'Yangın ustası!',
     ability:'💧 Söndürme +%40',abilityId:'extinguish',
     stats:{speed:3,extinguish:5,oxygen:3,eco:4},
     skin:'#C68642',hair:'#1a0a00',shirt:'#e67e22',pants:'#2c3e50',hat:'#e67e22',
@@ -557,22 +559,19 @@ function renderSB(){
   html+='</div>';document.getElementById('sbContent').innerHTML=html;
 }
 function clearScores(){
-  // confirm() iframe içinde çalışmayabilir, inline sor
   const btn=document.querySelector('[onclick="clearScores()"]');
-  if(btn.dataset.confirming==='1'){
+  if(btn&&btn.dataset.confirming==='1'){
     // İkinci tıklama — sil
     ['anaokulu','ilkokul','ortaokul'].forEach(lv=>localStorage.removeItem('sb_'+lv));
+    localStorage.removeItem('goldLeaves');
+    localStorage.removeItem('unlockedChars');
+    selChar=0; // karakteri sıfırla
     renderSB();
-    btn.textContent='🗑️ Skor Sıfırla';
-    btn.dataset.confirming='0';
-    btn.style.color='#e74c3c';
-    showToast('✅ Tüm skorlar silindi!','#e74c3c');
+    if(btn){btn.textContent='🗑️ Skor Sıfırla';btn.dataset.confirming='0';btn.style.color='#e74c3c';}
+    showToast('✅ Tüm skorlar, altın yapraklar ve karakterler sıfırlandı!','#e74c3c');
   }else{
-    // İlk tıklama — onayla
-    btn.dataset.confirming='1';
-    btn.textContent='⚠️ Emin misin? Tekrar bas!';
-    btn.style.color='#ff6b35';
-    setTimeout(()=>{btn.dataset.confirming='0';btn.textContent='🗑️ Skor Sıfırla';btn.style.color='#e74c3c';},3000);
+    if(btn){btn.dataset.confirming='1';btn.textContent='⚠️ Emin misin? Tekrar bas!';btn.style.color='#ff6b35';
+    setTimeout(()=>{btn.dataset.confirming='0';btn.textContent='🗑️ Skor Sıfırla';btn.style.color='#e74c3c';},3000);}
   }
 }
 function esc(s){return(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
@@ -1175,40 +1174,53 @@ function _drawGirl(p,C,bob,swing){
 }
 
 function _drawRanger(p,C,bob,swing){
-  const bw=26,hr=16,fat=1.35;
+  const bw=26,hr=16;
   _drawLegs(C,bob,swing,21);
-  // Yelek - turuncu ormancı
-  ctx.fillStyle='#2c3e50';ctx.beginPath();ctx.roundRect(-bw/2,-8+bob,bw,23,5);ctx.fill();// alt gömlek
-  ctx.fillStyle=C.shirt;ctx.beginPath();ctx.roundRect(-bw/2,-8+bob,bw/2-1,23,5);ctx.fill();// yelek sol
+  // Koyu lacivert gömlek altı
+  ctx.fillStyle='#2c3e50';ctx.beginPath();ctx.roundRect(-bw/2,-8+bob,bw,23,5);ctx.fill();
+  // Turuncu yelek (yarım)
+  ctx.fillStyle=C.shirt;ctx.beginPath();ctx.roundRect(-bw/2,-8+bob,bw/2-1,23,5);ctx.fill();
   ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.roundRect(-bw/2+1,-6+bob,4,13,2);ctx.fill();
-  // Yansıtıcı bant
+  // Sarı yansıtıcı bant
   ctx.fillStyle='#f1c40f';ctx.fillRect(-bw/2,3+bob,bw,3);
   _drawArms(C,bob,swing,p.holdingPump);
-  ctx.fillStyle=C.skin;ctx.beginPath();ctx.roundRect(-4,-12+bob,8,6,2);ctx.fill();
-  // Büyük baş - iri ormancı
-  ctx.fillStyle=C.skin;ctx.beginPath();ctx.arc(0,-20+bob,hr,0,Math.PI*2);ctx.fill();
-  // Kısa saç
-  ctx.fillStyle=C.hair;ctx.beginPath();ctx.arc(0,-25+bob,hr,Math.PI,.06*Math.PI);ctx.fill();ctx.beginPath();ctx.arc(-hr*.7,-24+bob,hr*.6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(hr*.7,-24+bob,hr*.55,0,Math.PI*2);ctx.fill();
-  // Kısa sakal
-  ctx.fillStyle='rgba(30,15,0,.7)';
-  ctx.beginPath();ctx.ellipse(0,-13+bob,hr*.7,hr*.4,0,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.ellipse(-hr*.5,-14+bob,hr*.3,hr*.25,-.2,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.ellipse(hr*.5,-14+bob,hr*.3,hr*.25,.2,0,Math.PI*2);ctx.fill();
-  const ey=-20+bob;
+  // Boyun
+  ctx.fillStyle=C.skin;ctx.beginPath();ctx.roundRect(-5,-12+bob,10,7,2);ctx.fill();
+  // Baş - iri ama insan
+  ctx.fillStyle=C.skin;ctx.beginPath();ctx.arc(0,-21+bob,hr,0,Math.PI*2);ctx.fill();
+  // Kısa koyu saç
+  ctx.fillStyle=C.hair;
+  ctx.beginPath();ctx.arc(0,-26+bob,hr,Math.PI,.06*Math.PI);ctx.fill();
+  ctx.beginPath();ctx.arc(-hr*.65,-25+bob,hr*.55,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(hr*.65,-25+bob,hr*.5,0,Math.PI*2);ctx.fill();
+  // Yüz detayları
+  const ey=-21+bob;
   _drawEyes(C,ey,hr,false);
-  // Kaşlar kalın
-  ctx.strokeStyle='rgba(30,15,0,.9)';ctx.lineWidth=3;ctx.lineCap='round';
+  // Kalın kaşlar - insana yakın
+  ctx.strokeStyle=C.hair;ctx.lineWidth=3;ctx.lineCap='round';
   ctx.beginPath();ctx.moveTo(-hr*.72,ey-hr*.55);ctx.lineTo(-hr*.12,ey-hr*.43);ctx.stroke();
   ctx.beginPath();ctx.moveTo(hr*.72,ey-hr*.55);ctx.lineTo(hr*.12,ey-hr*.43);ctx.stroke();
-  ctx.strokeStyle='#c46060';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,ey+hr*.28,hr*.32,.2,Math.PI-.2);ctx.stroke();
-  // Baret - sarı/turuncu ormancı bareti
-  ctx.fillStyle=C.hat;// turuncu
-  ctx.beginPath();ctx.ellipse(0,ey-hr*.7,hr*1.35,hr*.42,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=adjC(C.hat,-15);ctx.beginPath();ctx.ellipse(0,ey-hr*.7-hr*.5,hr*1.1,hr*.7,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=C.hat;ctx.beginPath();ctx.ellipse(0,ey-hr*.7-hr*.48,hr*.95,hr*.62,0,0,Math.PI*2);ctx.fill();
+  // Burun - küçük
+  ctx.fillStyle=adjC(C.skin,-15);ctx.beginPath();ctx.ellipse(0,ey+hr*.15,3,2.5,0,0,Math.PI*2);ctx.fill();
+  // Gülümseme
+  ctx.strokeStyle='#a04040';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,ey+hr*.32,hr*.3,.2,Math.PI-.2);ctx.stroke();
+  // Sadece çene altında hafif stubble (hayvan gibi DEĞİL)
+  ctx.fillStyle='rgba(40,20,0,.35)';
+  ctx.beginPath();ctx.ellipse(0,ey+hr*.4,hr*.35,hr*.18,0,0,Math.PI*2);ctx.fill();
+  // Yanaklar - hafif kırmızımsı
+  ctx.fillStyle='rgba(200,100,80,.25)';
+  ctx.beginPath();ctx.ellipse(-hr*.7,ey+hr*.15,hr*.3,hr*.2,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(hr*.7,ey+hr*.15,hr*.3,hr*.2,0,0,Math.PI*2);ctx.fill();
+  // Turuncu ormancı bareti
+  ctx.fillStyle=C.hat;
+  ctx.beginPath();ctx.ellipse(0,ey-hr*.72,hr*1.35,hr*.42,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=adjC(C.hat,-15);
+  ctx.beginPath();ctx.ellipse(0,ey-hr*.72-hr*.5,hr*1.1,hr*.7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=C.hat;
+  ctx.beginPath();ctx.ellipse(0,ey-hr*.72-hr*.48,hr*.95,hr*.62,0,0,Math.PI*2);ctx.fill();
   // Baret lambası
-  ctx.fillStyle='#f1c40f';ctx.beginPath();ctx.roundRect(-4,ey-hr-.3,8,6,3);ctx.fill();
-  ctx.fillStyle='rgba(255,220,0,.4)';ctx.beginPath();ctx.arc(0,ey-hr,8,-.8,.8);ctx.lineTo(0,ey-hr);ctx.fill();
+  ctx.fillStyle='#f1c40f';ctx.beginPath();ctx.roundRect(-5,ey-hr-2,10,7,3);ctx.fill();
+  ctx.fillStyle='rgba(255,230,50,.35)';ctx.beginPath();ctx.arc(0,ey-hr,10,-.7,.7);ctx.lineTo(0,ey-hr);ctx.fill();
   _drawTool(p,C,bob);
 }
 
@@ -1284,25 +1296,26 @@ function spawnFire(x,y){
 // ── SMART SPAWN: avoid trees and sapling zones ──
 function spawnTrash(){
   let attempts=0,x,y,valid=false;
-  while(!valid&&attempts<40){
+  while(!valid&&attempts<60){
     x=80+Math.random()*(MW-160);y=80+Math.random()*(MH-160);valid=true;
-    // Min distance from ALL trees (grown or not — use fixed 70px floor)
+    // Trees: visual radius ≈ 28px * scale, plus pickup margin of 50px
     for(const t of gs.trees){
-      const minD=Math.max(70, 70*(t.grown?t.s:0.5));
+      const sc=t.grown?t.s:Math.max(t.growPct,0.3)*t.s;
+      const visualR=28*sc; // foliage radius from drawTree
+      const minD=visualR+55; // foliage + comfortable pickup gap
       if(Math.hypot(x-t.x,y-t.y)<minD){valid=false;break;}
     }
-    // Min distance from sapling protection zones (100px)
+    // Sapling protection zones: generous 120px
     if(valid)for(const z of (gs.saplingZones||[])){
-      if(Math.hypot(x-z.x,y-z.y)<100){valid=false;break;}
+      if(Math.hypot(x-z.x,y-z.y)<120){valid=false;break;}
     }
-    // Min distance from existing fires (no trash right on fire)
+    // Keep away from fires too
     if(valid)for(const f of gs.fires){
-      if(Math.hypot(x-f.x,y-f.y)<80){valid=false;break;}
+      if(Math.hypot(x-f.x,y-f.y)<90){valid=false;break;}
     }
     attempts++;
   }
-  // If still no valid spot found after 40 tries, skip this spawn
-  if(!valid)return;
+  if(!valid)return; // no valid spot found, skip
   gs.trash.push({x,y,type:Math.floor(Math.random()*6),age:0,onFire:false});
 }
 
@@ -1319,8 +1332,17 @@ function plantSapling(x,y){
   gs.plantAnims.push({x,y,t:0});
   // Register sapling protection zone
   if(!gs.saplingZones)gs.saplingZones=[];
-  gs.saplingZones.push({x,y});if(gs.saplingZones.length>20)gs.saplingZones.shift();
-  setTimeout(()=>{if(gs)gs.trees.push({x,y,s:.55+Math.random()*.35,v:Math.floor(Math.random()*3),grown:false,growPct:0,newTree:true,collR:12});},400);
+  gs.saplingZones.push({x,y});
+  if(gs.saplingZones.length>30)gs.saplingZones.shift();
+  // Remove any existing trash near the new sapling (120px radius)
+  gs.trash=gs.trash.filter(t=>Math.hypot(t.x-x,t.y-y)>120);
+  // Add tree after animation
+  setTimeout(()=>{
+    if(!gs)return;
+    gs.trees.push({x,y,s:.55+Math.random()*.35,v:Math.floor(Math.random()*3),grown:false,growPct:0,newTree:true,collR:12});
+    // Also clean up any trash that spawned during the 400ms animation delay
+    gs.trash=gs.trash.filter(t=>Math.hypot(t.x-x,t.y-y)>120);
+  },400);
 }
 function updateHUD(){if(!gs)return;let h='';for(let i=0;i<gs.lives;i++)h+='❤️';document.getElementById('heartsD').textContent=h||'💀';}
 function updateOxyBar(){if(!gs)return;const v=Math.max(0,gs.oxygen);document.getElementById('oxyFill').style.width=v+'%';const hue=v*1.2;document.getElementById('oxyFill').style.background=`linear-gradient(90deg,hsl(${hue},80%,45%),hsl(${hue},80%,60%))`;}
@@ -1520,9 +1542,9 @@ function drawCharPrev(canvas,C){
   c.beginPath();c.arc(-hr*.7,-23,hr*.55,0,Math.PI*2);c.fill();c.beginPath();c.arc(hr*.7,-23,hr*.5,0,Math.PI*2);c.fill();
   if(C.charType==='child'){c.beginPath();c.arc(hr*.2,-27,3,0,Math.PI*2);c.fill();}
   if(C.charType==='girl'){c.fillStyle='#e74c3c';c.fillRect(-hr,-23,hr*2,3);c.fillStyle=C.hair;c.beginPath();c.ellipse(-hr*.7,-19,3,12,.1,0,Math.PI*2);c.fill();}
-  if(C.charType==='ranger'){c.fillStyle='rgba(30,15,0,.7)';c.beginPath();c.ellipse(0,-13,hr*.62,hr*.36,0,0,Math.PI*2);c.fill();}
-  if(C.charType==='elder'){c.fillStyle='#e8e8e8';c.beginPath();c.ellipse(0,-13,hr*.5,hr*.19,0,0,Math.PI*2);c.fill();}
   const ey=-19;
+  if(C.charType==='ranger'){c.fillStyle='rgba(40,20,0,.3)';c.beginPath();c.ellipse(0,ey+hr*.42,hr*.33,hr*.16,0,0,Math.PI*2);c.fill();}
+  if(C.charType==='elder'){c.fillStyle='#e8e8e8';c.beginPath();c.ellipse(0,-13,hr*.5,hr*.19,0,0,Math.PI*2);c.fill();}
   c.fillStyle='#fff';c.beginPath();c.ellipse(-hr*.42,ey,hr*.32,hr*.36,0,0,Math.PI*2);c.fill();c.beginPath();c.ellipse(hr*.42,ey,hr*.32,hr*.36,0,0,Math.PI*2);c.fill();
   c.fillStyle='#2a4a8a';c.beginPath();c.arc(-hr*.42,ey,hr*.2,0,Math.PI*2);c.fill();c.beginPath();c.arc(hr*.42,ey,hr*.2,0,Math.PI*2);c.fill();
   c.fillStyle='#111';c.beginPath();c.arc(-hr*.35,ey,hr*.11,0,Math.PI*2);c.fill();c.beginPath();c.arc(hr*.48,ey,hr*.11,0,Math.PI*2);c.fill();
