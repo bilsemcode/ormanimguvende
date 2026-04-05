@@ -239,11 +239,6 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div class="hb" id="heartsD">❤️❤️❤️</div>
     <span class="oxy-lbl">🫁</span>
     <div id="oxyBar"><div id="oxyFill" style="width:100%"></div></div>
-    <div class="hb" id="fireKitHud" style="gap:5px">
-      <span style="font-size:9px;color:#00e5ff;font-weight:700">[E]</span>
-      <span style="font-size:15px">🧯</span>
-      <span style="font-family:'Fredoka One',cursive;font-size:15px;color:#fff" id="fireKitRemain">0</span>
-    </div>
     <div class="hb"><span class="hl" id="lvlLbl">-</span></div>
   </div>
   <div id="timerWrap">
@@ -257,7 +252,14 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div id="questProgress" style="margin-top:4px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden"><div id="questFill" style="height:100%;background:#FFD60A;border-radius:3px;transition:width .4s"></div></div>
   </div>
   <div id="bottomHud">
-    <div id="fidanD">🌱 <span id="fidanC">0</span>  🍃 <span id="goldHudC">0</span></div>
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+      <div id="fidanD">🌱 <span id="fidanC">0</span>  🍃 <span id="goldHudC">0</span></div>
+      <div id="fireKitHud" style="display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.5);padding:5px 11px;border-radius:20px;transition:all .3s">
+        <span style="font-size:9px;color:#00e5ff;font-weight:700;text-transform:uppercase;letter-spacing:.5px">[E]</span>
+        <span style="font-size:15px">🧯</span>
+        <span style="font-family:'Fredoka One',cursive;font-size:15px;color:#fff" id="fireKitRemain">0</span>
+      </div>
+    </div>
     <div id="powerupHud"></div>
     <div></div>
   </div>
@@ -345,10 +347,22 @@ const GAME_DURATION=120;
 function scaleGame(){const s=Math.min(window.innerWidth/960,window.innerHeight/700,1.3);document.getElementById('scaler').style.transform=`scale(${s})`;}
 window.addEventListener('resize',scaleGame);scaleGame();
 
-// ── GOLD / UNLOCKS ──
+// ── GOLD / UNLOCKS / TOTAL SAPLINGS ──
 function getGold(){return parseInt(localStorage.getItem('goldLeaves')||'0');}
 function addGold(n){localStorage.setItem('goldLeaves',getGold()+n);}
 function spendGold(n){const g=getGold();if(g>=n){localStorage.setItem('goldLeaves',g-n);return true;}return false;}
+
+function getTotalFidan(){return parseInt(localStorage.getItem('totalFidan')||'0');}
+function addTotalFidan(n){localStorage.setItem('totalFidan',getTotalFidan()+n);}
+function spendTotalFidan(n){
+  const f=getTotalFidan();
+  if(f>=n){
+    localStorage.setItem('totalFidan',f-n);
+    return true;
+  }
+  return false;
+}
+
 function getUnlocked(){try{return JSON.parse(localStorage.getItem('unlockedChars')||'[0]');}catch{return[0];}}
 function unlockChar(i){const u=getUnlocked();if(!u.includes(i)){u.push(i);localStorage.setItem('unlockedChars',JSON.stringify(u));}}
 
@@ -427,12 +441,13 @@ const CHARS=[
     charType:'ranger', // sakallı, baret
   },
   {
-    // Yaşlı dede - beyaz saçlı, yeşil şapkalı, gözlüklü, baston
-    name:'Bilge\nDede', desc:'Ipucu hakki var!',
-    ability:'🧠 Soru ipucu (2x)',abilityId:'hint',
-    stats:{speed:2,extinguish:2,oxygen:4,eco:5},
+    // Yaşlı dede - full özellikli özel karakter
+    name:'Bilge\nDede', desc:'Usta koruyucu!',
+    ability:'🌟 Tüm özellikler FULL',abilityId:'master',
+    stats:{speed:5,extinguish:5,oxygen:5,eco:5},
     skin:'#F0D0B0',hair:'#ddd',shirt:'#8e44ad',pants:'#5b2c6f',hat:'#27ae60',
-    bodyW:22,headR:16,fatness:1.15,shortLegs:true,price:120,
+    bodyW:22,headR:16,fatness:1.15,shortLegs:true,price:250,unlockType:'fidan',
+    speedMod:1.25,extMod:1.4,hintCount:2,oxygenBonus:25,ecoBonus:15,
     charType:'elder', // yaşlı, gözlüklü, bıyık
   },
 ];
@@ -589,10 +604,11 @@ function clearScores(){
     ['anaokulu','ilkokul','ortaokul'].forEach(lv=>localStorage.removeItem('sb_'+lv));
     localStorage.removeItem('goldLeaves');
     localStorage.removeItem('unlockedChars');
+    localStorage.removeItem('totalFidan');
     selChar=0; // karakteri sıfırla
     renderSB();
     if(btn){btn.textContent='🗑️ Skor Sıfırla';btn.dataset.confirming='0';btn.style.color='#e74c3c';}
-    showToast('✅ Tüm skorlar, altın yapraklar ve karakterler sıfırlandı!','#e74c3c');
+    showToast('✅ Tüm skorlar, altın yapraklar, fidanlar ve karakterler sıfırlandı!','#e74c3c');
   }else{
     if(btn){btn.dataset.confirming='1';btn.textContent='⚠️ Emin misin? Tekrar bas!';btn.style.color='#ff6b35';
     setTimeout(()=>{btn.dataset.confirming='0';btn.textContent='🗑️ Skor Sıfırla';btn.style.color='#e74c3c';},3000);}
@@ -605,13 +621,15 @@ function initGS(level){
   const cfg=LEVELS[level];
   const C=CHARS[selChar];
   // Character ability modifiers
-  const speedMod=C.abilityId==='speed'?1.25:1;
-  const extMod=C.abilityId==='extinguish'?1.4:1;
-  const hintCount=C.abilityId==='hint'?2:0;
+  const speedMod=C.speedMod || (C.abilityId==='speed'?1.25:1);
+  const extMod=C.extMod || (C.abilityId==='extinguish'?1.4:1);
+  const hintCount=(C.hintCount ?? (C.abilityId==='hint'?2:0));
+  const oxygenBonus=C.oxygenBonus || 0;
+  const ecoBonus=C.ecoBonus || (C.abilityId==='eco'?15:0);
   const qPool=buildQPool(level);
   analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0};
   return{
-    level,cfg,score:0,lives:cfg.lives,oxygen:100,fidan:0,firesSuppressed:0,
+    level,cfg,score:0,lives:cfg.lives,oxygen:Math.min(100,100+oxygenBonus),fidan:0,firesSuppressed:0,
     timeLeft:GAME_DURATION,goldEarned:0,
     trashCollectedCount:0,correctAnswerCount:0,wrongAnswerCount:0,
     combo:1,comboTimer:0, // combo system
@@ -622,7 +640,7 @@ function initGS(level){
       wx:MW/2,wy:MH/2,dir:1,step:0,isMoving:false,
       holdingFidan:false,holdingPump:false,pumpAnim:0,
       waterParts:[],speedTrail:[],recoilX:0,activeEffects:{},
-      speedMod,extMod,hintCount,hintUsed:0,
+      speedMod,extMod,hintCount,hintUsed:0,ecoBonus,
     },
     trash:[],fires:[],trees:genTrees(),effects:[],plantAnims:[],
     animals:spawnAnimals(),
@@ -666,7 +684,7 @@ function startGame(level){
 function retryGame(){startGame(curLevel);}
 function onKD(e){if(gs)gs.keys[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();}
 function onKU(e){if(gs)gs.keys[e.key]=false;}
-function goToChar(){const v=document.getElementById('playerName').value.trim();playerName=v||'Kahraman';document.getElementById('goldLeafAmt').textContent=getGold();buildCharSelect();showScreen('charScreen');}
+function goToChar(){const v=document.getElementById('playerName').value.trim();playerName=v||'Kahraman';document.getElementById('goldLeafAmt').textContent=`${getGold()} 🍃 | ${getTotalFidan()} 🌱`;buildCharSelect();showScreen('charScreen');}
 
 function loop(ts){const dt=Math.min((ts-lastT)/1000,.05);lastT=ts;if(gs&&!gs.gameOver){if(!gs.paused)update(dt);render();}raf=requestAnimationFrame(loop);}
 
@@ -768,7 +786,7 @@ function update(dt){
         gs.combo=Math.min(5,gs.combo+1);gs.comboTimer=5;
         document.getElementById('comboD').textContent=`x${gs.combo}`;
         if(gs.combo>1){document.getElementById('comboBanner').textContent=`🔥 COMBO x${gs.combo}!`;document.getElementById('comboBanner').classList.add('show');setTimeout(()=>document.getElementById('comboBanner').classList.remove('show'),1200);}
-        const bonus=CHARS[selChar].abilityId==='eco'?15:0;
+        const bonus=gs.player.ecoBonus||0;
         gs.score+=30*gs.combo;gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=3;gs.xp+=20;
         gs.oxygen=Math.min(100,gs.oxygen+8);
         addFxPlayer(`+${30*gs.combo} 🌱`+(bonus?` +${bonus}`:''),'#52b788');
@@ -1453,7 +1471,9 @@ function endGame(reason){
   document.getElementById('rainOverlay').style.opacity='0';
   document.removeEventListener('keydown',onKD);document.removeEventListener('keyup',onKU);
   saveAnalytics();
-  const earned=Math.floor(gs.fidan*3+gs.score/20);addGold(earned);
+  const earned=Math.floor(gs.fidan*3+gs.score/20);
+  addGold(earned);
+  addTotalFidan(gs.fidan);
   const rank=saveScore(gs.level,playerName,gs.score,gs.fidan,gs.firesSuppressed);
   // Calculate eco score components
   const totalQ=gs.correctAnswerCount+gs.wrongAnswerCount||1;
@@ -1519,23 +1539,45 @@ function showToast(msg,col){const el=document.getElementById('toast');el.textCon
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='charScreen'){document.getElementById('goldLeafAmt').textContent=getGold();buildCharSelect();}
+  if(id==='charScreen'){document.getElementById('goldLeafAmt').textContent=`${getGold()} 🍃 | ${getTotalFidan()} 🌱`;buildCharSelect();}
 }
 
 // ── CHAR SELECT with stat bars ──
 function buildCharSelect(){
-  const unlocked=getUnlocked(),gold=getGold();
+  const unlocked=getUnlocked(),gold=getGold(),totalFidan=getTotalFidan();
   const cards=document.getElementById('charCards');cards.innerHTML='';
+  document.getElementById('goldLeafAmt').textContent=`${gold} 🍃 | ${totalFidan} 🌱`;
   CHARS.forEach((C,i)=>{
     const isU=unlocked.includes(i);
+    const unlockType=C.unlockType||'gold';
     const div=document.createElement('div');
     div.className='char-card'+(i===selChar&&isU?' selected':'')+(isU?'':' locked');
     div.onclick=()=>{
-      if(isU){selChar=i;buildCharSelect();}
-      else if(gold>=C.price&&spendGold(C.price)){unlockChar(i);selChar=i;document.getElementById('goldLeafAmt').textContent=getGold();buildCharSelect();showToast(`🎉 ${C.name.replace('\n',' ')} kilidi acildi!`,'#FFD60A');}
-      else showToast(`❌ Yeterli Altin Yaprak yok! (${C.price} 🍃 gerekli)`,'#e63946');
+      if(isU){
+        selChar=i;
+        buildCharSelect();
+      }else if(unlockType==='fidan'){
+        if(totalFidan>=C.price&&spendTotalFidan(C.price)){
+          unlockChar(i);
+          selChar=i;
+          buildCharSelect();
+          showToast(`🎉 ${C.name.replace('\n',' ')} kilidi ${C.price} 🌱 ile acildi!`,'#FFD60A');
+        }else{
+          showToast(`❌ Yeterli fidan yok! (${C.price} 🌱 gerekli)`,'#e63946');
+        }
+      }else if(gold>=C.price&&spendGold(C.price)){
+        unlockChar(i);
+        selChar=i;
+        buildCharSelect();
+        showToast(`🎉 ${C.name.replace('\n',' ')} kilidi acildi!`,'#FFD60A');
+      }else{
+        showToast(`❌ Yeterli Altin Yaprak yok! (${C.price} 🍃 gerekli)`,'#e63946');
+      }
     };
-    if(!isU){const lk=document.createElement('div');lk.className='lock-badge';lk.textContent='🔒';div.appendChild(lk);const pr=document.createElement('div');pr.className='price-badge';pr.textContent=`${C.price} 🍃`;div.appendChild(pr);}
+    if(!isU){
+      const lk=document.createElement('div');lk.className='lock-badge';lk.textContent='🔒';div.appendChild(lk);
+      const pr=document.createElement('div');pr.className='price-badge';pr.textContent=unlockType==='fidan'?`${C.price} 🌱`:`${C.price} 🍃`;div.appendChild(pr);
+    }
     const cv=document.createElement('canvas');cv.width=90;cv.height=100;cv.style.display='block';cv.style.margin='0 auto';div.appendChild(cv);drawCharPrev(cv,C);
     const nm=document.createElement('div');nm.className='char-name';nm.textContent=C.name.replace('\n',' ');
     const ab=document.createElement('div');ab.className='char-ability';ab.textContent=C.ability;
