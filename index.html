@@ -127,6 +127,25 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 .qbtn.correct{background:#52b788!important;color:#fff!important;border-color:#2d6a4f!important}
 .qbtn.wrong{background:#e63946!important;color:#fff!important;border-color:#c1121f!important;animation:qshake .4s}
 @keyframes qshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* DECISION */
+#dOverlay{position:absolute;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:205;backdrop-filter:blur(4px)}
+#dOverlay.active{display:flex}
+.dbox{background:linear-gradient(135deg,#fffdf0,#f0fff4);border-radius:24px;padding:26px;max-width:540px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.5);border:4px solid #FFD60A;animation:popIn .3s cubic-bezier(.34,1.56,.64,1)}
+.dbadge{display:inline-block;background:linear-gradient(135deg,#FFD60A,#FF6B35);color:#fff;font-family:'Fredoka One',cursive;font-size:13px;padding:4px 14px;border-radius:20px;margin-bottom:10px}
+.dtext{font-size:16px;font-weight:800;color:#1b4332;line-height:1.45;margin-bottom:14px}
+.dsub{font-size:12px;color:#40916c;margin-bottom:12px;line-height:1.5}
+.dopts{display:grid;gap:10px}
+.dbtn{padding:12px 14px;border:3px solid #ffe08a;border-radius:14px;background:#fff8d6;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#4a3b00;cursor:pointer;transition:all .15s;text-align:left}
+.dbtn:hover{background:#ffd60a;color:#fff;border-color:#ffb703;transform:scale(1.02)}
+/* Analytics summary */
+.analytics-card{background:linear-gradient(135deg,#1c3d34,#224e45);border-radius:20px;padding:16px 22px;margin:8px 0 2px;border:2px solid #52b788;max-width:460px;width:100%}
+.analytics-title{font-family:'Fredoka One',cursive;font-size:17px;color:#b7e4c7;margin-bottom:10px;text-align:center}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.analytics-item{background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
+.analytics-k{font-size:10px;color:#74c69d;text-transform:uppercase;letter-spacing:.8px}
+.analytics-v{font-family:'Fredoka One',cursive;font-size:18px;color:#FFD60A;margin-top:3px}
+
 /* SCOREBOARD */
 #scoreboardScreen{background:linear-gradient(135deg,#1a3a2a,#0d2218);overflow-y:auto}
 .sb-title{font-family:'Fredoka One',cursive;font-size:38px;color:#FFD60A;margin-bottom:4px;text-align:center}
@@ -210,8 +229,11 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 <!-- CHAR SELECT -->
 <div id="charScreen" class="screen">
   <div class="char-title">🎭 Karakterini Seç</div>
-  <div class="char-sub">Her karakterin özel yeteneği var! Kilit açmak için 🍃 Altın Yaprak kullan</div>
-  <div id="goldLeafDisplay">🍃 Altın Yaprak: <span id="goldLeafAmt">0</span></div>
+  <div class="char-sub">Her karakterin özel yeteneği var! Karakterleri 🍃 Altın Yaprak ve 🌱 Fidan ile aç</div>
+  <div id="goldLeafDisplay">🍃 Altın: <span id="goldLeafAmt">0</span></div>
+  <div style="font-size:11px;color:#74c69d;margin:18px auto 12px;text-align:center;display:inline-block;background:rgba(0,0,0,0.25);padding:6px 14px;border-radius:12px">
+    🌱 Fidanlar özel karakterleri açmak için kullanılır
+  </div>
   <div class="char-cards" id="charCards"></div>
   <div style="margin-top:16px;display:flex;gap:12px">
     <button class="back-btn" onclick="showScreen('nameScreen')">← Geri</button>
@@ -290,6 +312,16 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
   </div>
 </div>
 
+<!-- DECISION -->
+<div id="dOverlay">
+  <div class="dbox">
+    <span class="dbadge">⚖️ Karar Anı</span>
+    <div class="dtext" id="dText"></div>
+    <div class="dsub" id="dSub"></div>
+    <div class="dopts" id="dOpts"></div>
+  </div>
+</div>
+
 <!-- SCOREBOARD -->
 <div id="scoreboardScreen" class="screen">
   <div class="sb-title">🏆 Skor Tablosu</div>
@@ -322,6 +354,15 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div class="eco-bar-row"><span class="eco-bar-label">Bilgi</span><div class="eco-bar-track"><div class="eco-bar-fill" id="eb3" style="width:0;background:linear-gradient(90deg,#3a86ff,#74c69d)"></div></div></div>
     <div class="eco-bar-row"><span class="eco-bar-label">Doğayı Koruma</span><div class="eco-bar-track"><div class="eco-bar-fill" id="eb4" style="width:0;background:linear-gradient(90deg,#ffd60a,#52b788)"></div></div></div>
     <div class="eco-score-total">Toplam: <span id="ecoTotal">0</span>/100</div>
+  </div>
+  <div class="analytics-card">
+    <div class="analytics-title">📊 Performans Analizi</div>
+    <div class="analytics-grid">
+      <div class="analytics-item"><div class="analytics-k">Doğru Cevap</div><div class="analytics-v" id="anCorrect">%0</div></div>
+      <div class="analytics-item"><div class="analytics-k">Ort. Tepki</div><div class="analytics-v" id="anReaction">0.0 sn</div></div>
+      <div class="analytics-item"><div class="analytics-k">Yangın Müdahale</div><div class="analytics-v" id="anFire">0</div></div>
+      <div class="analytics-item"><div class="analytics-k">Hayvan Kurtarma</div><div class="analytics-v" id="anRescue">0</div></div>
+    </div>
   </div>
   <div class="eco-msg">"Ormanlar dünyamızın akciğeridir. Her yıl 15 milyar ağaç kesiliyor — sen 1 tane dikersen fark yaratırsın!"</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px">
@@ -367,7 +408,7 @@ function getUnlocked(){try{return JSON.parse(localStorage.getItem('unlockedChars
 function unlockChar(i){const u=getUnlocked();if(!u.includes(i)){u.push(i);localStorage.setItem('unlockedChars',JSON.stringify(u));}}
 
 // ── ANALYTICS (TÜBİTAK) ──
-let analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0};
+let analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0,animalsRescued:0,decisionsRight:0,decisionsWrong:0};
 function saveAnalytics(){localStorage.setItem('analytics',JSON.stringify(analytics));}
 
 // ── DID YOU KNOW ──
@@ -627,7 +668,7 @@ function initGS(level){
   const oxygenBonus=C.oxygenBonus || 0;
   const ecoBonus=C.ecoBonus || (C.abilityId==='eco'?15:0);
   const qPool=buildQPool(level);
-  analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0};
+  analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0,animalsRescued:0,decisionsRight:0,decisionsWrong:0};
   return{
     level,cfg,score:0,lives:cfg.lives,oxygen:Math.min(100,100+oxygenBonus),fidan:0,firesSuppressed:0,
     timeLeft:GAME_DURATION,goldEarned:0,
@@ -649,7 +690,7 @@ function initGS(level){
     powerups:[],puTimer:8+Math.random()*12,
     fireKits:[],fireKitTimer:15+Math.random()*10,
     fireKitStock:0,fireKitUsed:0,eKeyHeld:false,
-    keys:{},qPool,qUsed:[],nextQTimer:randQInterval(cfg),
+    keys:{},qPool,qUsed:[],nextQTimer:randQInterval(cfg),nextDecisionAt:18+Math.random()*18,decisionActive:false,
     fIdCtr:0,fireTimers:{},
     wrongFirePending:false,wrongFireDelay:0,
     badges:[],shake:{t:0},
@@ -666,6 +707,77 @@ function initGS(level){
 }
 
 function randQInterval(cfg){return cfg.qIntervalMin+Math.random()*(cfg.qIntervalMax-cfg.qIntervalMin);}
+
+const DECISIONS=[
+  {
+    text:'Yakında hem yangın hem çöp var. Önce hangisiyle ilgilenmelisin?',
+    sub:'Doğru öncelik hayat kurtarır.',
+    options:[
+      {text:'🔥 Önce yangını söndür',correct:true,reward:{score:20,oxygen:4},msg:'Harika karar! Önce acil riski azalttın.'},
+      {text:'🗑️ Önce çöpleri topla',correct:false,penalty:{oxygen:8},msg:'Çöpler önemli ama aktif yangın daha acil bir risktir.'}
+    ]
+  },
+  {
+    text:'Yerde cam şişe gördün. En doğru davranış nedir?',
+    sub:'Cam yüzeyler güneşte yangın riskini artırabilir.',
+    options:[
+      {text:'🧤 Güvenliyse kaldırıp uzaklaştırmak / büyüklere haber vermek',correct:true,reward:{score:18},msg:'Doğru! Risk kaynağını fark ettin.'},
+      {text:'🚶 Olduğu gibi bırakmak',correct:false,penalty:{oxygen:6},msg:'Yanlış. Cam şişeler yangına neden olabilir.'}
+    ]
+  },
+  {
+    text:'Rüzgâr kuvvetlendi. Alevlerin yayılmasını azaltmak için ne yapmalısın?',
+    sub:'Hava koşulları kararları etkiler.',
+    options:[
+      {text:'🔥 Yangın bölgesine hemen yönelmek',correct:true,reward:{score:20},msg:'Doğru! Rüzgâr varken hızlı müdahale gerekir.'},
+      {text:'🌱 Uzakta fidan dikmeye devam etmek',correct:false,penalty:{oxygen:8},msg:'Yanlış zamanlama. Önce büyüyen riski kontrol etmelisin.'}
+    ]
+  }
+];
+
+function triggerDecisionMoment(){
+  if(!gs||gs.questionActive||gs.gameOver||gs.paused)return;
+  const d=DECISIONS[Math.floor(Math.random()*DECISIONS.length)];
+  gs.questionActive=true;gs.paused=true;gs.decisionActive=true;
+  document.getElementById('dText').textContent=d.text;
+  document.getElementById('dSub').textContent=d.sub;
+  const opts=document.getElementById('dOpts');opts.innerHTML='';
+  d.options.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='dbtn';
+    btn.textContent=opt.text;
+    btn.onclick=()=>answerDecision(opt,d);
+    opts.appendChild(btn);
+  });
+  document.getElementById('dOverlay').classList.add('active');
+}
+
+function answerDecision(opt,d){
+  if(!gs)return;
+  document.querySelectorAll('.dbtn').forEach(b=>b.onclick=null);
+  if(opt.correct){
+    analytics.decisionsRight++;
+    gs.score += opt.reward?.score || 0;
+    gs.oxygen = Math.min(100, gs.oxygen + (opt.reward?.oxygen || 0));
+    gs.xp += 8;
+    showToast('✅ '+opt.msg,'#52b788');
+    addFxPlayer(`+${opt.reward?.score||0} karar`,'#FFD60A');
+  }else{
+    analytics.decisionsWrong++;
+    gs.oxygen = Math.max(0, gs.oxygen - (opt.penalty?.oxygen || 0));
+    gs.lives = Math.max(0, gs.lives - (opt.penalty?.life || 0));
+    triggerShake(.45);
+    updateHUD();
+    showToast('⚠️ '+opt.msg,'#e63946');
+  }
+  setTimeout(()=>{
+    if(!gs)return;
+    document.getElementById('dOverlay').classList.remove('active');
+    gs.questionActive=false;gs.paused=false;gs.decisionActive=false;
+    gs.nextDecisionAt = 20 + Math.random()*22;
+    if(gs.lives<=0||gs.oxygen<=0)endGame('dead');
+  },1200);
+}
 function nextQ(){
   if(!gs.qPool.length){gs.qPool=buildQPool(gs.level);gs.qUsed=[];}
   const q=gs.qPool.shift();gs.qUsed.push(q);return q;
@@ -684,7 +796,7 @@ function startGame(level){
 function retryGame(){startGame(curLevel);}
 function onKD(e){if(gs)gs.keys[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();}
 function onKU(e){if(gs)gs.keys[e.key]=false;}
-function goToChar(){const v=document.getElementById('playerName').value.trim();playerName=v||'Kahraman';document.getElementById('goldLeafAmt').textContent=`${getGold()} 🍃 | ${getTotalFidan()} 🌱`;buildCharSelect();showScreen('charScreen');}
+function goToChar(){const v=document.getElementById('playerName').value.trim();playerName=v||'Kahraman';document.getElementById('goldLeafAmt').textContent=`${getGold()} Altın Yaprak | ${getTotalFidan()} Fidan`;buildCharSelect();showScreen('charScreen');}
 
 function loop(ts){const dt=Math.min((ts-lastT)/1000,.05);lastT=ts;if(gs&&!gs.gameOver){if(!gs.paused)update(dt);render();}raf=requestAnimationFrame(loop);}
 
@@ -756,6 +868,12 @@ function update(dt){
   }
 
   updateWind(dt);updateWeather(dt);
+
+  // Decision moments (do not replace main gameplay, just enrich it)
+  gs.nextDecisionAt-=dt;
+  if(gs.nextDecisionAt<=0&&!gs.questionActive&&!gs.wrongFirePending&&!gs.decisionActive){
+    triggerDecisionMoment();
+  }
 
   // FIRES — with extinguish modifier
   let nearFire=false;
@@ -934,6 +1052,14 @@ function updateWeather(dt){
 function updateAnimals(dt){
   for(const a of gs.animals){
     if(a.dead)continue;
+    if(!a.rescued&&a.state==='panic'&&wDist2(a,gs.player)<42){
+      a.rescued=true;
+      gs.score+=15; gs.xp+=6;
+      analytics.animalsRescued++;
+      addFx(a.x,a.y,'🛟 Kurtarıldı!','#FFD60A');
+      showToast('🐾 Bir hayvanı güvene aldın! +15 puan','#52b788');
+      continue;
+    }
     a.anim+=dt*(a.state==='idle'?1:6);a.stateTimer-=dt;
     if(a.stateTimer<=0){
       if(a.state==='idle'){a.state='walk';a.stateTimer=2+Math.random()*3;const ang=Math.random()*Math.PI*2,spd2=a.bird?(50+Math.random()*40):(30+Math.random()*50);a.targetVx=Math.cos(ang)*spd2;a.targetVy=Math.sin(ang)*spd2;a.vx=a.targetVx;a.vy=a.targetVy;}
@@ -1487,6 +1613,13 @@ function endGame(reason){
   document.getElementById('finFires').textContent=gs.firesSuppressed;
   document.getElementById('finGold').textContent='+'+earned;
   document.getElementById('finRank').textContent='#'+rank;
+  const totalAnswers=analytics.correctAnswers+analytics.wrongAnswers;
+  const avgReaction=analytics.responseTimes.length? (analytics.responseTimes.reduce((a,b)=>a+b,0)/analytics.responseTimes.length):0;
+  const correctPct=totalAnswers?Math.round((analytics.correctAnswers/totalAnswers)*100):0;
+  document.getElementById('anCorrect').textContent=`%${correctPct}`;
+  document.getElementById('anReaction').textContent=`${avgReaction.toFixed(1)} sn`;
+  document.getElementById('anFire').textContent=analytics.firesSuppressed;
+  document.getElementById('anRescue').textContent=analytics.animalsRescued;
   document.getElementById('goPlayerName').textContent=playerName+' — '+LEVELS[gs.level].name;
   document.getElementById('goTitle').textContent=reason==='time'?'⏱ Süre Doldu!':'Oyun Bitti!';
   document.getElementById('goEm').textContent=reason==='time'?'⏱':'🌳';
@@ -1539,14 +1672,14 @@ function showToast(msg,col){const el=document.getElementById('toast');el.textCon
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='charScreen'){document.getElementById('goldLeafAmt').textContent=`${getGold()} 🍃 | ${getTotalFidan()} 🌱`;buildCharSelect();}
+  if(id==='charScreen'){document.getElementById('goldLeafAmt').textContent=`${getGold()} Altın Yaprak | ${getTotalFidan()} Fidan`;buildCharSelect();}
 }
 
 // ── CHAR SELECT with stat bars ──
 function buildCharSelect(){
   const unlocked=getUnlocked(),gold=getGold(),totalFidan=getTotalFidan();
   const cards=document.getElementById('charCards');cards.innerHTML='';
-  document.getElementById('goldLeafAmt').textContent=`${gold} 🍃 | ${totalFidan} 🌱`;
+  document.getElementById('goldLeafAmt').textContent=`${gold} Altın Yaprak | ${totalFidan} Fidan`;
   CHARS.forEach((C,i)=>{
     const isU=unlocked.includes(i);
     const unlockType=C.unlockType||'gold';
