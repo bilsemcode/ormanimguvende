@@ -164,7 +164,9 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 .sb-table tr:nth-child(3) td{color:#cd7f32;font-weight:800}
 .sb-empty{color:#74c69d;font-size:13px;text-align:center;padding:20px}
 /* GAME OVER / ECO SCORE */
-#goScreen{background:linear-gradient(135deg,#1b1b2f,#162032);overflow-y:auto}
+#goScreen{background:linear-gradient(135deg,#1b1b2f,#162032);overflow-y:auto;position:relative;padding-top:24px}
+.go-tree-decor{position:sticky;top:6px;z-index:2;display:block;text-align:center;font-size:34px;line-height:1;height:40px;animation:treeSway 2.6s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));margin-bottom:6px}
+@keyframes treeSway{0%,100%{transform:rotate(-4deg) translateY(0)}50%{transform:rotate(4deg) translateY(-2px)}}
 .go-em{font-size:72px;margin-bottom:10px;animation:bounce 1s infinite}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .go-title{font-family:'Fredoka One',cursive;font-size:38px;color:#ff6b35;margin-bottom:8px}
@@ -340,6 +342,7 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 
 <!-- GAME OVER -->
 <div id="goScreen" class="screen">
+  <div class="go-tree-decor" id="goTreeDecor">🌲</div>
   <div class="go-em" id="goEm">🌳</div>
   <div class="go-title" id="goTitle">Süre Doldu!</div>
   <div style="font-size:13px;color:#b7e4c7;margin-bottom:4px" id="goPlayerName"></div>
@@ -500,7 +503,7 @@ const CHARS=[
 // ── LEVELS ──
 const LEVELS={
   anaokulu:{lives:5,speed:3.8,trashRate:.0020,fireRate:.0003,qIntervalMin:10,qIntervalMax:15,qSet:'anaokulu',name:'Anaokulu',fireTimeout:15,qOpts:3},
-  ilkokul: {lives:3,speed:3.0,trashRate:.0040,fireRate:.0007,qIntervalMin:10,qIntervalMax:15,qSet:'ilkokul', name:'Ilkokul', fireTimeout:12,qOpts:4},
+  ilkokul: {lives:4,speed:3.0,trashRate:.0040,fireRate:.0007,qIntervalMin:10,qIntervalMax:15,qSet:'ilkokul', name:'Ilkokul', fireTimeout:12,qOpts:4},
   ortaokul:{lives:3,speed:3.8,trashRate:.0070,fireRate:.0014,qIntervalMin:10,qIntervalMax:14,qSet:'ortaokul',name:'Ortaokul',fireTimeout:12,qOpts:4},
 };
 
@@ -682,7 +685,7 @@ function initGS(level){
   return{
     level,cfg,score:0,lives:cfg.lives,oxygen:Math.min(100,100+oxygenBonus),fidan:0,firesSuppressed:0,
     timeLeft:GAME_DURATION,goldEarned:0,
-    trashCollectedCount:0,correctAnswerCount:0,wrongAnswerCount:0,
+    trashCollectedCount:0,correctAnswerCount:0,wrongAnswerCount:0,animalsRescuedCount:0,
     combo:1,comboTimer:0, // combo system
     paused:false,gameOver:false,questionActive:false,currentQ:null,
     qStartTime:0, // for response time analytics
@@ -765,11 +768,12 @@ function answerDecision(opt,d){
   document.querySelectorAll('.dbtn').forEach(b=>b.onclick=null);
   if(opt.correct){
     analytics.decisionsRight++;
-    gs.score += opt.reward?.score || 0;
+    const decisionScore = Math.round((opt.reward?.score || 0) * 1.25);
+    gs.score += decisionScore;
     gs.oxygen = Math.min(100, gs.oxygen + (opt.reward?.oxygen || 0));
     gs.xp += 8;
     showToast('✅ '+opt.msg,'#52b788');
-    addFxPlayer(`+${opt.reward?.score||0} karar`,'#FFD60A');
+    addFxPlayer(`+${decisionScore} karar`,'#FFD60A');
   }else{
     analytics.decisionsWrong++;
     gs.oxygen = Math.max(0, gs.oxygen - (opt.penalty?.oxygen || 0));
@@ -866,9 +870,9 @@ function update(dt){
     const t=gs.trash[i];
     if(!t.onFire&&wDist(p,t)<32){
       gs.trash.splice(i,1);
-      gs.score+=4*gs.combo;gs.oxygen=Math.min(100,gs.oxygen+2);
+      gs.score+=5*gs.combo;gs.oxygen=Math.min(100,gs.oxygen+2);
       gs.trashCollectedCount++;gs.xp+=5;
-      addFxPlayer(gs.combo>1?`+${4*gs.combo} x${gs.combo}`:`+4`,'#52b788');
+      addFxPlayer(gs.combo>1?`+${5*gs.combo} x${gs.combo}`:`+5`,'#52b788');
       for(let s2=0;s2<6;s2++)gs.effects.push({x:t.x,y:t.y,text:'⭐',color:'#FFD60A',life:1.2,vy:-60-Math.random()*40,vx:(Math.random()-.5)*60,star:true});
       analytics.trashCollected++;
       playSound('collect');checkBadges();checkQuest();
@@ -913,9 +917,9 @@ function update(dt){
         document.getElementById('comboD').textContent=`x${gs.combo}`;
         if(gs.combo>1){document.getElementById('comboBanner').textContent=`🔥 COMBO x${gs.combo}!`;document.getElementById('comboBanner').classList.add('show');setTimeout(()=>document.getElementById('comboBanner').classList.remove('show'),1200);}
         const bonus=Math.min(6,gs.player.ecoBonus||0);
-        gs.score+=12*gs.combo;gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=2;gs.xp+=14;
+        gs.score+=15*gs.combo;gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=2;gs.xp+=14;
         gs.oxygen=Math.min(100,gs.oxygen+8);
-        addFxPlayer(`+${12*gs.combo} 🌱`+(bonus?` +${bonus}`:''),'#52b788');
+        addFxPlayer(`+${15*gs.combo} 🌱`+(bonus?` +${bonus}`:''),'#52b788');
         if(bonus){gs.score+=bonus;addFxPlayer(`+${bonus} 🌿 ECO`,'#74c69d');}
         analytics.firesSuppressed++;playSound('extinguish');plantSapling(fx,fy);
         p.holdingFidan=true;setTimeout(()=>{if(gs)p.holdingFidan=false;},2200);
@@ -972,7 +976,7 @@ function update(dt){
   if((k['e']||k['E'])&&!gs.eKeyHeld&&gs.fireKitStock>0){
     gs.eKeyHeld=true;gs.fireKitStock--;gs.fireKitUsed++;
     const extCount=gs.fires.length;
-    for(const f of gs.fires){gs.fidan++;gs.score+=12;gs.goldEarned+=1;delete gs.fireTimers[f.id];plantSapling(f.x,f.y);}
+    for(const f of gs.fires){gs.fidan++;gs.score+=15;gs.goldEarned+=1;delete gs.fireTimers[f.id];plantSapling(f.x,f.y);}
     gs.fires=[];gs.oxygen=Math.min(100,gs.oxygen+Math.max(1,extCount)*6);gs.firesSuppressed+=extCount;
     showToast(`🧯 Tüm yangınlar söndü! Kalan: ${gs.fireKitStock}🧯`,'#00e5ff');
     showPowerupLabel('🧯 Tüm Yangınlar Söndürüldü!','#00e5ff');playSound('extinguish');checkBadges();checkQuest();
@@ -1060,12 +1064,15 @@ function updateWeather(dt){
 function updateAnimals(dt){
   for(const a of gs.animals){
     if(a.dead)continue;
-    if(!a.rescued&&a.state==='panic'&&wDist2(a,gs.player)<42){
+    if(!a.rescued&&a.state==='panic'&&wDist2(a,gs.player)<58){
       a.rescued=true;
-      gs.score+=8; gs.xp+=5;
+      a.dead=true;
+      gs.animalsRescuedCount=(gs.animalsRescuedCount||0)+1;
+      gs.score+=12; gs.xp+=7; gs.fidan+=1;
       analytics.animalsRescued++;
       addFx(a.x,a.y,'🛟 Kurtarıldı!','#FFD60A');
-      showToast('🐾 Bir hayvanı güvene aldın! +8 puan','#52b788');
+      showToast('🐾 Bir hayvanı güvene aldın! +12 puan +1 🌱','#52b788');
+      checkQuest();
       continue;
     }
     a.anim+=dt*(a.state==='idle'?1:6);a.stateTimer-=dt;
@@ -1101,7 +1108,7 @@ function updateQuest(){
   document.getElementById('questText').textContent=q.text+` (${val}/${q.target})`;
   document.getElementById('questFill').style.width=pct+'%';
   if(val>=q.target&&!gs.questCompleted){
-    gs.questCompleted=true;gs.score+=20;gs.xp+=18;
+    gs.questCompleted=true;gs.score+=25;gs.xp+=18;
     showToast('🎯 GÖREV TAMAMLANDI! +20 puan','#FFD60A');
     showPowerupLabel('🎯 Görev Tamam! +50','#FFD60A');
     // Pick new quest
@@ -1561,7 +1568,7 @@ function answerQ(idx,btn){
   let closeDelay=2200;
   if(idx===q.c){
     btn.classList.add('correct');
-    gs.score+=10;gs.oxygen=Math.min(100,gs.oxygen+4);gs.correctAnswerCount++;gs.xp+=8;
+    gs.score+=12;gs.oxygen=Math.min(100,gs.oxygen+4);gs.correctAnswerCount++;gs.xp+=8;
     analytics.correctAnswers++;
     playSound('correct');showToast('🎉 Dogru! +10 puan, +4 oksijen!','#52b788');
     if(q.fact){
@@ -1605,7 +1612,7 @@ function endGame(reason){
   document.getElementById('rainOverlay').style.opacity='0';
   document.removeEventListener('keydown',onKD);document.removeEventListener('keyup',onKU);
   saveAnalytics();
-  const earned=Math.floor(gs.fidan*2+gs.score/35);
+  const earned=Math.floor(gs.fidan*2+gs.score/30);
   addGold(earned);
   addTotalFidan(gs.fidan);
   const rank=saveScore(gs.level,playerName,gs.score,gs.fidan,gs.firesSuppressed);
@@ -1627,7 +1634,7 @@ function endGame(reason){
   document.getElementById('anCorrect').textContent=`%${correctPct}`;
   document.getElementById('anReaction').textContent=`${avgReaction.toFixed(1)} sn`;
   document.getElementById('anFire').textContent=analytics.firesSuppressed;
-  document.getElementById('anRescue').textContent=analytics.animalsRescued;
+  document.getElementById('anRescue').textContent=gs.animalsRescuedCount||analytics.animalsRescued;
   document.getElementById('goPlayerName').textContent=playerName+' — '+LEVELS[gs.level].name;
   document.getElementById('goTitle').textContent=reason==='time'?'⏱ Süre Doldu!':'Oyun Bitti!';
   document.getElementById('goEm').textContent=reason==='time'?'⏱':'🌳';
