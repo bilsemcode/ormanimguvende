@@ -191,6 +191,19 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 /* BADGE */
 #badgePop{position:absolute;top:58px;right:14px;transform:translateX(120%) scale(0);transform-origin:top right;background:linear-gradient(135deg,#FFD60A,#ff6b35);color:#fff;padding:8px 14px;border-radius:14px;z-index:249;pointer-events:none;transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;white-space:nowrap;max-width:220px}
 #badgePop.show{transform:translateX(0) scale(1)}
+#factOverlay{position:absolute;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:260;backdrop-filter:blur(4px)}
+#factOverlay.active{display:flex}
+.fact-box{background:linear-gradient(135deg,#f3f7ef,#eef4e8);border-radius:30px;padding:28px;max-width:720px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.45);border:5px solid #f3cc2f;position:relative}
+.fact-badge{display:inline-block;background:linear-gradient(135deg,#ffb74d,#ff8a34);color:#fff;font-family:'Fredoka One',cursive;font-size:15px;padding:8px 18px;border-radius:999px;margin-bottom:12px}
+.fact-close{position:absolute;top:16px;right:16px;width:42px;height:42px;border:none;border-radius:50%;background:rgba(27,67,50,.14);color:#1b4332;font-family:'Fredoka One',cursive;font-size:22px;cursor:pointer}
+.fact-title{font-family:'Fredoka One',cursive;font-size:22px;color:#1f4f3b;margin-bottom:10px}
+.fact-sub{font-size:13px;color:#5d9b7b;margin-bottom:18px;font-weight:700}
+.fact-text{font-size:18px;line-height:1.55;color:#264635;background:rgba(116,198,157,.08);border:3px solid rgba(243,204,47,.55);border-radius:22px;padding:18px 20px;min-height:120px;display:flex;align-items:center}
+.fact-actions{display:flex;justify-content:space-between;gap:12px;margin-top:18px;flex-wrap:wrap}
+.fact-nav{flex:1;min-width:170px;padding:14px 18px;border-radius:18px;border:3px solid #f0cc67;background:#efe6c5;color:#5a4b13;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:all .15s;text-align:center}
+.fact-nav:hover{transform:translateY(-1px);background:#f6ebc9}
+.fact-counter{font-size:12px;color:#5d9b7b;text-align:center;margin-top:10px;font-weight:800}
+
 </style>
 </head>
 <body>
@@ -342,6 +355,23 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
   </div>
 </div>
 
+
+<!-- BILGI DEPOSU -->
+<div id="factOverlay" onclick="factOverlayClick(event)">
+  <div class="fact-box">
+    <button class="fact-close" onclick="closeDidYouKnow()">×</button>
+    <div class="fact-badge">📚 Bilgi Deposu</div>
+    <div class="fact-title">İpuçları</div>
+    <div class="fact-sub">Doğayı korumak için kısa bilgiler ve hatırlatmalar</div>
+    <div class="fact-text" id="factText"></div>
+    <div class="fact-counter" id="factCounter">1 / 1</div>
+    <div class="fact-actions">
+      <button class="fact-nav" onclick="prevDidYouKnow()">⬅ Önceki İpucu</button>
+      <button class="fact-nav" onclick="nextDidYouKnow()">Sonraki İpucu ➡</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCOREBOARD -->
 <div id="scoreboardScreen" class="screen">
   <div class="sb-title">🏆 Skor Tablosu</div>
@@ -467,9 +497,32 @@ const DYK=[
   '🌿 Bazen yanan ormanlık alanlara hemen fidan dikmek yerine, doğanın kendi küllerinden yeniden doğmasına (doğal gençleşme) izin vermek daha bilimsel bir adımdır.',
   '🌬️ Rüzgarlı havalarda yakılan küçük bir piknik ateşi, saniyeler içinde kontrol edilemez bir alev fırtınasına dönüşebilir.'
 ];
-function showDidYouKnow(){
-  const fact=DYK[Math.floor(Math.random()*DYK.length)];
-  alert('💡 Biliyor musun?\n\n'+fact);
+let factIndex=0;
+function renderDidYouKnow(){
+  const txt=document.getElementById('factText');
+  const ctr=document.getElementById('factCounter');
+  if(!txt||!ctr)return;
+  txt.textContent=DYK[factIndex]||'';
+  ctr.textContent=`${factIndex+1} / ${DYK.length}`;
+}
+function showDidYouKnow(startIndex=null){
+  factIndex = startIndex===null ? Math.floor(Math.random()*DYK.length) : ((startIndex%DYK.length)+DYK.length)%DYK.length;
+  renderDidYouKnow();
+  document.getElementById('factOverlay').classList.add('active');
+}
+function closeDidYouKnow(){
+  document.getElementById('factOverlay').classList.remove('active');
+}
+function nextDidYouKnow(){
+  factIndex=(factIndex+1)%DYK.length;
+  renderDidYouKnow();
+}
+function prevDidYouKnow(){
+  factIndex=(factIndex-1+DYK.length)%DYK.length;
+  renderDidYouKnow();
+}
+function factOverlayClick(e){
+  if(e.target&&e.target.id==='factOverlay') closeDidYouKnow();
 }
 
 // ── CHARACTER STATS & ABILITIES ──
@@ -1085,7 +1138,7 @@ function updateAnimals(dt){
       gs.score+=12; gs.xp+=7; gs.fidan+=1;
       analytics.animalsRescued++;
       addFx(a.x,a.y,'🛟 Kurtarıldı!','#FFD60A');
-      showToast('🐾 Bir hayvanı güvene aldın! +12 puan +1 🌱','#52b788');
+      showToast(`🐾 Bir hayvanı güvene aldın! Toplam kurtarma: ${gs.animalsRescuedCount}`,'#52b788');
       checkQuest();
       continue;
     }
@@ -1648,7 +1701,8 @@ function endGame(reason){
   document.getElementById('anCorrect').textContent=`%${correctPct}`;
   document.getElementById('anReaction').textContent=`${avgReaction.toFixed(1)} sn`;
   document.getElementById('anFire').textContent=analytics.firesSuppressed;
-  document.getElementById('anRescue').textContent=gs.animalsRescuedCount||analytics.animalsRescued;
+  const rescueCount=Math.max(gs.animalsRescuedCount||0, analytics.animalsRescued||0);
+  document.getElementById('anRescue').textContent=rescueCount;
   document.getElementById('goPlayerName').textContent=playerName+' — '+LEVELS[gs.level].name;
   document.getElementById('goTitle').textContent=reason==='time'?'⏱ Süre Doldu!':'Oyun Bitti!';
   document.getElementById('goEm').textContent=reason==='time'?'⏱':'🌳';
