@@ -167,11 +167,12 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 .sb-empty{color:#74c69d;font-size:13px;text-align:center;padding:20px}
 /* GAME OVER / ECO SCORE */
 #goScreen{background:linear-gradient(135deg,#1b1b2f,#162032);overflow-y:auto;position:relative;padding-top:24px}
-.go-tree-decor{position:sticky;top:-18px;z-index:2;display:block;text-align:center;font-size:34px;line-height:1;height:40px;animation:treeSway 2.6s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));margin-bottom:-10px}
+.go-title-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
+.go-tree-decor{position:static;display:inline-block;font-size:34px;line-height:1;animation:treeSway 2.6s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));transform-origin:center center}
 @keyframes treeSway{0%,100%{transform:rotate(-4deg) translateY(0)}50%{transform:rotate(4deg) translateY(-2px)}}
 .go-em{display:none}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.go-title{font-family:'Fredoka One',cursive;font-size:38px;color:#ff6b35;margin-bottom:8px}
+.go-title{font-family:'Fredoka One',cursive;font-size:38px;color:#ff6b35;margin:0}
 .go-stats{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;justify-content:center}
 .gstat{background:rgba(255,255,255,.1);border-radius:14px;padding:10px 16px;text-align:center;border:2px solid rgba(255,255,255,.12)}
 .gsval{font-family:'Fredoka One',cursive;font-size:24px;color:#FFD60A}
@@ -388,9 +389,11 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 
 <!-- GAME OVER -->
 <div id="goScreen" class="screen">
-  <div class="go-tree-decor" id="goTreeDecor">🌲</div>
+  <div class="go-title-wrap">
+    <div class="go-tree-decor" id="goTreeDecor">🌲</div>
+    <div class="go-title" id="goTitle">Süre Doldu!</div>
+  </div>
   <div class="go-em" id="goEm">🌳</div>
-  <div class="go-title" id="goTitle">Süre Doldu!</div>
   <div style="font-size:13px;color:#b7e4c7;margin-bottom:4px" id="goPlayerName"></div>
   <div class="go-stats">
     <div class="gstat"><div class="gsval" id="finScore">0</div><div class="gslbl">Puan</div></div>
@@ -1757,6 +1760,10 @@ function showToast(msg,col){const el=document.getElementById('toast');el.textCon
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  const factOverlay=document.getElementById('factOverlay');
+  if(factOverlay) factOverlay.classList.remove('active');
+  const dykOverlay=document.getElementById('dykOverlay');
+  if(dykOverlay) dykOverlay.classList.remove('active');
   if(id==='charScreen'){document.getElementById('goldLeafAmt').textContent=`${getGold()} Altın Yaprak | ${getTotalFidan()} Fidan`;buildCharSelect();}
 }
 
