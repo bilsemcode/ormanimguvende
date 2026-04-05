@@ -318,6 +318,20 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
   </div>
 </div>
 
+<!-- DID YOU KNOW -->
+<div id="dykOverlay" onclick="handleDYKBackdrop(event)">
+  <div class="dykbox" onclick="event.stopPropagation()">
+    <button class="dykclose" onclick="closeDidYouKnow()">×</button>
+    <span class="dykbadge">💡 Biliyor musun?</span>
+    <div class="dykmeta" id="dykMeta">1 / 1</div>
+    <div class="dyktext" id="dykText"></div>
+    <div class="dykactions">
+      <button class="dykbtn" onclick="prevDidYouKnow()">← Önceki</button>
+      <button class="dykbtn" onclick="nextDidYouKnow()">Sonraki →</button>
+    </div>
+  </div>
+</div>
+
 <!-- DECISION -->
 <div id="dOverlay">
   <div class="dbox">
@@ -1807,6 +1821,7 @@ function hTouch(e){
   const p=gs.player,s=wToS(p.wx,p.wy);const dx=tx-s.x,dy=ty-s.y;
   if(Math.abs(dx)>12||Math.abs(dy)>12){gs.keys['ArrowLeft']=dx<-12;gs.keys['ArrowRight']=dx>12;gs.keys['ArrowUp']=dy<-12;gs.keys['ArrowDown']=dy>12;}
 }
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeDidYouKnow();});
 </script>
 </body>
 </html>
