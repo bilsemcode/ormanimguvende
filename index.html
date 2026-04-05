@@ -212,6 +212,9 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
   <div class="char-title">🎭 Karakterini Seç</div>
   <div class="char-sub">Her karakterin özel yeteneği var! Kilit açmak için 🍃 Altın Yaprak kullan</div>
   <div id="goldLeafDisplay">🍃 Altın Yaprak: <span id="goldLeafAmt">0</span></div>
+  <div style="font-size:11px;color:#74c69d;margin-top:6px;text-align:center">
+  🌱 Fidanlar özel karakterleri açmak için kullanılır
+</div>
   <div class="char-cards" id="charCards"></div>
   <div style="margin-top:16px;display:flex;gap:12px">
     <button class="back-btn" onclick="showScreen('nameScreen')">← Geri</button>
@@ -1546,8 +1549,7 @@ function showScreen(id){
 function buildCharSelect(){
   const unlocked=getUnlocked(),gold=getGold(),totalFidan=getTotalFidan();
   const cards=document.getElementById('charCards');cards.innerHTML='';
-  document.getElementById('goldLeafAmt').textContent=`${gold} 🍃 | ${totalFidan} 🌱`;
-  CHARS.forEach((C,i)=>{
+document.getElementById('goldLeafAmt').textContent = `🍃 ${gold} Altın Yaprak   |   🌱 ${totalFidan} Fidan`;  CHARS.forEach((C,i)=>{
     const isU=unlocked.includes(i);
     const unlockType=C.unlockType||'gold';
     const div=document.createElement('div');
