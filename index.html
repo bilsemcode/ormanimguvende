@@ -30,6 +30,9 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 #comboBanner.show{transform:translateX(-50%) scale(1)}
 /* Quest banner */
 #questBanner{position:absolute;top:8px;right:14px;background:rgba(0,0,0,.6);border:2px solid #FFD60A;border-radius:14px;padding:8px 14px;z-index:102;pointer-events:none;min-width:180px}
+#animalAlert{position:absolute;top:82px;right:14px;background:rgba(181,38,38,.85);border:2px solid rgba(255,220,220,.28);border-radius:14px;padding:7px 12px;z-index:103;pointer-events:none;min-width:170px;font-family:'Fredoka One',cursive;font-size:11px;color:#fff;display:none;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+#animalAlert.show{display:block;animation:pulseWarn 1s infinite}
+@keyframes pulseWarn{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 /* Info card (fun fact) */
 #infoCard{position:absolute;bottom:10px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,#1b4332,#2d6a4f);color:#b7e4c7;font-size:13px;padding:10px 18px;border-radius:14px;z-index:103;pointer-events:none;opacity:0;transition:all .4s;max-width:420px;text-align:center;border:2px solid #52b788}
 #infoCard.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -273,6 +276,7 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div id="questText" style="font-size:11px;color:#b7e4c7;line-height:1.4"></div>
     <div id="questProgress" style="margin-top:4px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden"><div id="questFill" style="height:100%;background:#FFD60A;border-radius:3px;transition:width .4s"></div></div>
   </div>
+  <div id="animalAlert">🐾 Tehlikede hayvan var!</div>
   <div id="bottomHud">
     <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
       <div id="fidanD">🌱 <span id="fidanC">0</span>  🍃 <span id="goldHudC">0</span></div>
@@ -596,6 +600,12 @@ function spawnAnimals(){
   return animals;
 }
 
+function spawnRescueAnimalNear(x,y){
+  const pool=['🐇','🦊','🦌','🐿️'];
+  const ang=Math.random()*Math.PI*2,dist=70+Math.random()*45;
+  return {type:pool[Math.floor(Math.random()*pool.length)],x:Math.max(80,Math.min(MW-80,x+Math.cos(ang)*dist)),y:Math.max(80,Math.min(MH-80,y+Math.sin(ang)*dist)),vx:0,vy:0,dir:1,state:'panic',stateTimer:8,anim:0,dead:false,bird:false,targetVx:0,targetVy:0,rescued:false,priorityRescue:true};
+}
+
 function initWind(){return{active:false,angle:0,strength:1,timer:0,nextIn:20+Math.random()*20,particles:[]};}
 function initWeather(){return{rain:false,rainTimer:0,rainDuration:10,willRain:Math.random()<0.3,rainTriggerAt:30+Math.random()*60,rainDrops:[],lightningTimer:3+Math.random()*4,triggered:false};}
 
@@ -690,7 +700,7 @@ function initGS(level){
     powerups:[],puTimer:8+Math.random()*12,
     fireKits:[],fireKitTimer:15+Math.random()*10,
     fireKitStock:0,fireKitUsed:0,eKeyHeld:false,
-    keys:{},qPool,qUsed:[],nextQTimer:randQInterval(cfg),nextDecisionAt:18+Math.random()*18,decisionActive:false,
+    keys:{},qPool,qUsed:[],decisionPool:shuffleArray([...DECISIONS]),decisionUsed:[],nextQTimer:randQInterval(cfg),nextDecisionAt:20+Math.random()*24,decisionActive:false,
     fIdCtr:0,fireTimers:{},
     wrongFirePending:false,wrongFireDelay:0,
     badges:[],shake:{t:0},
@@ -707,37 +717,35 @@ function initGS(level){
 }
 
 function randQInterval(cfg){return cfg.qIntervalMin+Math.random()*(cfg.qIntervalMax-cfg.qIntervalMin);}
+function shuffleArray(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function nextDecision(){if(!gs.decisionPool.length){gs.decisionPool=shuffleArray([...DECISIONS]);gs.decisionUsed=[];}const d=gs.decisionPool.shift();gs.decisionUsed.push(d);return d;}
 
 const DECISIONS=[
-  {
-    text:'Yakında hem yangın hem çöp var. Önce hangisiyle ilgilenmelisin?',
-    sub:'Doğru öncelik hayat kurtarır.',
-    options:[
-      {text:'🔥 Önce yangını söndür',correct:true,reward:{score:20,oxygen:4},msg:'Harika karar! Önce acil riski azalttın.'},
-      {text:'🗑️ Önce çöpleri topla',correct:false,penalty:{oxygen:8},msg:'Çöpler önemli ama aktif yangın daha acil bir risktir.'}
-    ]
-  },
-  {
-    text:'Yerde cam şişe gördün. En doğru davranış nedir?',
-    sub:'Cam yüzeyler güneşte yangın riskini artırabilir.',
-    options:[
-      {text:'🧤 Güvenliyse kaldırıp uzaklaştırmak / büyüklere haber vermek',correct:true,reward:{score:18},msg:'Doğru! Risk kaynağını fark ettin.'},
-      {text:'🚶 Olduğu gibi bırakmak',correct:false,penalty:{oxygen:6},msg:'Yanlış. Cam şişeler yangına neden olabilir.'}
-    ]
-  },
-  {
-    text:'Rüzgâr kuvvetlendi. Alevlerin yayılmasını azaltmak için ne yapmalısın?',
-    sub:'Hava koşulları kararları etkiler.',
-    options:[
-      {text:'🔥 Yangın bölgesine hemen yönelmek',correct:true,reward:{score:20},msg:'Doğru! Rüzgâr varken hızlı müdahale gerekir.'},
-      {text:'🌱 Uzakta fidan dikmeye devam etmek',correct:false,penalty:{oxygen:8},msg:'Yanlış zamanlama. Önce büyüyen riski kontrol etmelisin.'}
-    ]
-  }
+  {text:'Yakında hem yangın hem çöp var. Önce hangisiyle ilgilenmelisin?',sub:'Doğru öncelik hayat kurtarır.',options:[{text:'🔥 Önce yangını söndür',correct:true,reward:{score:8,oxygen:3},msg:'Harika karar! Önce acil riski azalttın.'},{text:'🗑️ Önce çöpleri topla',correct:false,penalty:{oxygen:5},msg:'Çöpler önemli ama aktif yangın daha acil bir risktir.'}]},
+  {text:'Yerde cam şişe gördün. En doğru davranış nedir?',sub:'Cam yüzeyler güneşte yangın riskini artırabilir.',options:[{text:'🧤 Güvenliyse kaldırıp uzaklaştırmak / büyüklere haber vermek',correct:true,reward:{score:7},msg:'Doğru! Risk kaynağını fark ettin.'},{text:'🚶 Olduğu gibi bırakmak',correct:false,penalty:{oxygen:4},msg:'Yanlış. Cam şişeler yangına neden olabilir.'}]},
+  {text:'Rüzgâr kuvvetlendi. Alevlerin yayılmasını azaltmak için ne yapmalısın?',sub:'Hava koşulları kararları etkiler.',options:[{text:'🔥 Yangın bölgesine hemen yönelmek',correct:true,reward:{score:8},msg:'Doğru! Rüzgâr varken hızlı müdahale gerekir.'},{text:'🌱 Uzakta fidan dikmeye devam etmek',correct:false,penalty:{oxygen:5},msg:'Yanlış zamanlama. Önce büyüyen riski kontrol etmelisin.'}]},
+  {text:'Piknik alanında hafif duman gördün. Ne yapmalısın?',sub:'Erken fark etmek büyük yangını önler.',options:[{text:'👀 Kaynağı kontrol edip büyüklere haber vermek',correct:true,reward:{score:7},msg:'Doğru! Erken müdahale çok önemlidir.'},{text:'🙈 Görmezden gelmek',correct:false,penalty:{oxygen:4},msg:'Duman ihmal edilmez. Küçük bir risk büyüyebilir.'}]},
+  {text:'Yerde pil buldun. En doğru karar nedir?',sub:'Piller doğayı kirletir ve ısınabilir.',options:[{text:'♻️ Toplayıp uygun atık noktasına ulaştırmak',correct:true,reward:{score:7},msg:'Doğru! Pil atıkları özel toplanmalıdır.'},{text:'🌳 Ağacın dibine bırakmak',correct:false,penalty:{oxygen:4},msg:'Yanlış. Pil toprağa zarar verir.'}]},
+  {text:'Bir arkadaşın kuru otların yanına izmarit attı. Ne yapmalısın?',sub:'İzmarit büyük yangın başlatabilir.',options:[{text:'🛑 Hemen uyarmak ve izmariti söndürmek',correct:true,reward:{score:8},msg:'Doğru! Hızlı davranarak riski önledin.'},{text:'😅 Bir şey olmaz deyip devam etmek',correct:false,penalty:{oxygen:5},msg:'Yanlış. Küçük kıvılcım büyük felakete dönüşebilir.'}]},
+  {text:'Yangın varken panikleyen bir hayvan gördün. Önceliğin ne olmalı?',sub:'Hem güvenlik hem canlı yaşamı önemli.',options:[{text:'🧯 Önce yakın yangını kontrol edip hayvana güvenli yaklaşmak',correct:true,reward:{score:8},msg:'Doğru! Güvenli kurtarma en doğru yaklaşımdır.'},{text:'🏃‍♂️ Direkt alevlerin içine koşmak',correct:false,penalty:{oxygen:5},msg:'Yanlış. Önce kendi güvenliğini sağlamalısın.'}]},
+  {text:'Ormanda rüzgâr çok kuvvetli. Ateş yakmak doğru mu?',sub:'Rüzgâr alevleri hızla yayar.',options:[{text:'❌ Hayır, çok risklidir',correct:true,reward:{score:7},msg:'Doğru! Rüzgârlı havada ateş çok tehlikelidir.'},{text:'✅ Evet, küçükse sorun olmaz',correct:false,penalty:{oxygen:4},msg:'Yanlış. Küçük ateş bile büyüyebilir.'}]},
+  {text:'Plastik şişe ve kağıt atık gördün. Ne yapmalısın?',sub:'Atıkları ayırmak çevre için daha iyidir.',options:[{text:'♻️ Toplayıp uygun şekilde ayırmak',correct:true,reward:{score:7},msg:'Doğru! Geri dönüşüm bilinci önemlidir.'},{text:'🗑️ Hepsini yere bırakmak',correct:false,penalty:{oxygen:4},msg:'Yanlış. Doğa çöp kutusu değildir.'}]},
+  {text:'Yangın bir ağacın dibine ulaşmış. En doğru karar nedir?',sub:'Ağaç kökleri ve çevresi de korunmalı.',options:[{text:'🧯 Hızla müdahale edip yayılmayı durdurmak',correct:true,reward:{score:8},msg:'Doğru! Yayılmayı önlemek kritik.'},{text:'🌱 Başka yerde fidan dikmek',correct:false,penalty:{oxygen:5},msg:'Yanlış. Önce mevcut tehlike çözülmeli.'}]},
+  {text:'Kamp alanından ayrılırken neyi mutlaka kontrol etmelisin?',sub:'Ateş kalıntıları saatler sonra bile tehlikeli olabilir.',options:[{text:'💧 Ateşin tamamen söndüğünü',correct:true,reward:{score:7},msg:'Doğru! Tam sönmeyen ateş yeniden alevlenebilir.'},{text:'🎒 Sadece çantamı almayı',correct:false,penalty:{oxygen:4},msg:'Yanlış. Ateş kalıntısı mutlaka kontrol edilmelidir.'}]},
+  {text:'Ormanda kırık cam parçaları gördün. En güvenli davranış nedir?',sub:'Hem yangın hem yaralanma riski vardır.',options:[{text:'🧤 Güvenliyse toplamak veya haber vermek',correct:true,reward:{score:7},msg:'Doğru! Riskli atıkları fark ettin.'},{text:'👣 Üzerinden atlayıp geçmek',correct:false,penalty:{oxygen:4},msg:'Yanlış. Tehlikeli atıklar bırakılmamalıdır.'}]},
+  {text:'Bir bölgede çöp çok birikmiş ama yangın yok. En doğru hareket?',sub:'Risk büyümeden temizlik yapmak önemlidir.',options:[{text:'🗑️ Çöpleri toplayıp alanı temizlemek',correct:true,reward:{score:6},msg:'Doğru! Önleyici temizlik çevreyi korur.'},{text:'⏳ Sonra bakarım demek',correct:false,penalty:{oxygen:3},msg:'Yanlış. Biriken çöp yeni riskler doğurur.'}]},
+  {text:'Küçük bir yangın çıktı ve yakınında hayvan yuvası var. Ne yaparsın?',sub:'Canlıların yaşam alanı korunmalı.',options:[{text:'🧯 Yangını hızla bastırıp bölgeyi güvene almak',correct:true,reward:{score:8},msg:'Doğru! Hem yangını hem canlıları korudun.'},{text:'📸 Fotoğraf çekip beklemek',correct:false,penalty:{oxygen:5},msg:'Yanlış. Müdahale edilmesi gereken bir durum var.'}]},
+  {text:'Duman görüp emin olamadın. En doğru yaklaşım nedir?',sub:'Şüphe varsa kontrol etmek gerekir.',options:[{text:'🔎 Güvenli mesafeden kontrol edip haber vermek',correct:true,reward:{score:7},msg:'Doğru! Şüpheli durum ciddiye alınmalıdır.'},{text:'🤷 Hiç ilgilenmemek',correct:false,penalty:{oxygen:4},msg:'Yanlış. Duman ihmal edilmemelidir.'}]},
+  {text:'Sıcak ve kurak havada ormanda nasıl davranmalısın?',sub:'Kuraklık yangın riskini artırır.',options:[{text:'⚠️ Daha dikkatli olup riskli davranışlardan kaçınmak',correct:true,reward:{score:7},msg:'Doğru! Hava koşulları dikkati artırmalıdır.'},{text:'🔥 Küçük ateş yakmanın sorun olmayacağını düşünmek',correct:false,penalty:{oxygen:4},msg:'Yanlış. Kurak hava büyük risk oluşturur.'}]},
+  {text:'Bir çocuk yere çöp attı. En yapıcı davranış hangisi?',sub:'Çevre bilinci paylaşılmalıdır.',options:[{text:'🙂 Uyarıp çöpü birlikte toplamak',correct:true,reward:{score:6},msg:'Doğru! Hem eğittin hem çevreyi korudun.'},{text:'😄 Gülüp geçmek',correct:false,penalty:{oxygen:3},msg:'Yanlış. Yanlış davranış düzeltilmelidir.'}]},
+  {text:'Yangın yok ama çok sayıda kuru dal ve atık birikmiş. Ne yapmalısın?',sub:'Önleyici davranış geleceği korur.',options:[{text:'🧹 Riskli atıkları temizlemek',correct:true,reward:{score:6},msg:'Doğru! Önlem almak yangını önler.'},{text:'🚶 Hiç dokunmadan devam etmek',correct:false,penalty:{oxygen:3},msg:'Yanlış. Risk birikmeden azaltılmalıdır.'}]},
+  {text:'Bir kuş panikle aşağı doğru uçuyor. Yakında ne olabilir?',sub:'Hayvan davranışları tehlikeyi haber verebilir.',options:[{text:'🔥 Yakında bir risk veya yangın olabilir',correct:true,reward:{score:7},msg:'Doğru! Hayvanlar bazen tehlikeyi önce hisseder.'},{text:'🎉 Sadece oyun oynuyordur',correct:false,penalty:{oxygen:4},msg:'Yanlış. Davranış değişikliği uyarı olabilir.'}]},
+  {text:'Fidan diktikten sonra bölgede çöp kaldığını gördün. Ne yapmalısın?',sub:'Yeni dikilen alanlar da korunmalıdır.',options:[{text:'🗑️ Alanı temizleyip fidanı korumak',correct:true,reward:{score:6},msg:'Doğru! Dikmek kadar korumak da önemlidir.'},{text:'🌱 Sadece dikim yeterli deyip ayrılmak',correct:false,penalty:{oxygen:3},msg:'Yanlış. Fidanın çevresi de temiz olmalıdır.'}]}
 ];
 
 function triggerDecisionMoment(){
   if(!gs||gs.questionActive||gs.gameOver||gs.paused)return;
-  const d=DECISIONS[Math.floor(Math.random()*DECISIONS.length)];
+  const d=nextDecision();
   gs.questionActive=true;gs.paused=true;gs.decisionActive=true;
   document.getElementById('dText').textContent=d.text;
   document.getElementById('dSub').textContent=d.sub;
@@ -774,7 +782,7 @@ function answerDecision(opt,d){
     if(!gs)return;
     document.getElementById('dOverlay').classList.remove('active');
     gs.questionActive=false;gs.paused=false;gs.decisionActive=false;
-    gs.nextDecisionAt = 20 + Math.random()*22;
+    gs.nextDecisionAt = 24 + Math.random()*26;
     if(gs.lives<=0||gs.oxygen<=0)endGame('dead');
   },1200);
 }
@@ -858,9 +866,9 @@ function update(dt){
     const t=gs.trash[i];
     if(!t.onFire&&wDist(p,t)<32){
       gs.trash.splice(i,1);
-      gs.score+=10*gs.combo;gs.oxygen=Math.min(100,gs.oxygen+3);
+      gs.score+=4*gs.combo;gs.oxygen=Math.min(100,gs.oxygen+2);
       gs.trashCollectedCount++;gs.xp+=5;
-      addFxPlayer(gs.combo>1?`+${10*gs.combo} x${gs.combo}`:`+10`,'#52b788');
+      addFxPlayer(gs.combo>1?`+${4*gs.combo} x${gs.combo}`:`+4`,'#52b788');
       for(let s2=0;s2<6;s2++)gs.effects.push({x:t.x,y:t.y,text:'⭐',color:'#FFD60A',life:1.2,vy:-60-Math.random()*40,vx:(Math.random()-.5)*60,star:true});
       analytics.trashCollected++;
       playSound('collect');checkBadges();checkQuest();
@@ -904,10 +912,10 @@ function update(dt){
         gs.combo=Math.min(5,gs.combo+1);gs.comboTimer=5;
         document.getElementById('comboD').textContent=`x${gs.combo}`;
         if(gs.combo>1){document.getElementById('comboBanner').textContent=`🔥 COMBO x${gs.combo}!`;document.getElementById('comboBanner').classList.add('show');setTimeout(()=>document.getElementById('comboBanner').classList.remove('show'),1200);}
-        const bonus=gs.player.ecoBonus||0;
-        gs.score+=30*gs.combo;gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=3;gs.xp+=20;
+        const bonus=Math.min(6,gs.player.ecoBonus||0);
+        gs.score+=12*gs.combo;gs.firesSuppressed++;gs.fidan++;gs.goldEarned+=2;gs.xp+=14;
         gs.oxygen=Math.min(100,gs.oxygen+8);
-        addFxPlayer(`+${30*gs.combo} 🌱`+(bonus?` +${bonus}`:''),'#52b788');
+        addFxPlayer(`+${12*gs.combo} 🌱`+(bonus?` +${bonus}`:''),'#52b788');
         if(bonus){gs.score+=bonus;addFxPlayer(`+${bonus} 🌿 ECO`,'#74c69d');}
         analytics.firesSuppressed++;playSound('extinguish');plantSapling(fx,fy);
         p.holdingFidan=true;setTimeout(()=>{if(gs)p.holdingFidan=false;},2200);
@@ -964,7 +972,7 @@ function update(dt){
   if((k['e']||k['E'])&&!gs.eKeyHeld&&gs.fireKitStock>0){
     gs.eKeyHeld=true;gs.fireKitStock--;gs.fireKitUsed++;
     const extCount=gs.fires.length;
-    for(const f of gs.fires){gs.fidan++;gs.score+=30;gs.goldEarned+=2;delete gs.fireTimers[f.id];plantSapling(f.x,f.y);}
+    for(const f of gs.fires){gs.fidan++;gs.score+=12;gs.goldEarned+=1;delete gs.fireTimers[f.id];plantSapling(f.x,f.y);}
     gs.fires=[];gs.oxygen=Math.min(100,gs.oxygen+Math.max(1,extCount)*6);gs.firesSuppressed+=extCount;
     showToast(`🧯 Tüm yangınlar söndü! Kalan: ${gs.fireKitStock}🧯`,'#00e5ff');
     showPowerupLabel('🧯 Tüm Yangınlar Söndürüldü!','#00e5ff');playSound('extinguish');checkBadges();checkQuest();
@@ -1054,10 +1062,10 @@ function updateAnimals(dt){
     if(a.dead)continue;
     if(!a.rescued&&a.state==='panic'&&wDist2(a,gs.player)<42){
       a.rescued=true;
-      gs.score+=15; gs.xp+=6;
+      gs.score+=8; gs.xp+=5;
       analytics.animalsRescued++;
       addFx(a.x,a.y,'🛟 Kurtarıldı!','#FFD60A');
-      showToast('🐾 Bir hayvanı güvene aldın! +15 puan','#52b788');
+      showToast('🐾 Bir hayvanı güvene aldın! +8 puan','#52b788');
       continue;
     }
     a.anim+=dt*(a.state==='idle'?1:6);a.stateTimer-=dt;
@@ -1093,8 +1101,8 @@ function updateQuest(){
   document.getElementById('questText').textContent=q.text+` (${val}/${q.target})`;
   document.getElementById('questFill').style.width=pct+'%';
   if(val>=q.target&&!gs.questCompleted){
-    gs.questCompleted=true;gs.score+=50;gs.xp+=30;
-    showToast('🎯 GÖREV TAMAMLANDI! +50 puan','#FFD60A');
+    gs.questCompleted=true;gs.score+=20;gs.xp+=18;
+    showToast('🎯 GÖREV TAMAMLANDI! +20 puan','#FFD60A');
     showPowerupLabel('🎯 Görev Tamam! +50','#FFD60A');
     // Pick new quest
     setTimeout(()=>{gs.currentQuest=pickQuest();gs.questCompleted=false;},2000);
@@ -1164,7 +1172,7 @@ function drawAnimal(a){
   }else if(a.type==='🐿️'){
     ctx.fillStyle='#a0622a';ctx.save();ctx.translate(-8,2+bob);ctx.rotate(.5);ctx.beginPath();ctx.ellipse(0,-8,6,14,.3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f5d5a0';ctx.beginPath();ctx.ellipse(0,-8,3,9,.3,0,Math.PI*2);ctx.fill();ctx.restore();ctx.fillStyle='#a0622a';ctx.save();ctx.translate(-3,7+bob);ctx.rotate(legSwing*Math.PI/180);ctx.beginPath();ctx.roundRect(-2,0,4,8,2);ctx.fill();ctx.restore();ctx.save();ctx.translate(3,7+bob);ctx.rotate(-legSwing*Math.PI/180);ctx.fillStyle='#a0622a';ctx.beginPath();ctx.roundRect(-2,0,4,8,2);ctx.fill();ctx.restore();ctx.fillStyle='#c0782e';ctx.beginPath();ctx.ellipse(0,2+bob,7,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f5e0c0';ctx.beginPath();ctx.ellipse(0,4+bob,4,6,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#c0782e';ctx.beginPath();ctx.arc(0,-9+bob,7,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(-5,-14+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(5,-14+bob,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#222';ctx.beginPath();ctx.arc(3,-10+bob,1.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d89050';ctx.beginPath();ctx.arc(5,-8+bob,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#555';ctx.beginPath();ctx.arc(7,-9+bob,1.2,0,Math.PI*2);ctx.fill();
   }
-  if(a.state==='panic'){ctx.font='13px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('😱',a.dir>0?10:-10,-30);}
+  if(a.state==='panic'){ctx.font='13px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('😱',a.dir>0?10:-10,-30);ctx.fillStyle='rgba(255,80,80,.92)';ctx.beginPath();ctx.roundRect(-18,-46,36,14,7);ctx.fill();ctx.font='bold 10px Nunito,sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('KURTAR!',0,-39);}
   ctx.restore();
 }
 
@@ -1553,9 +1561,9 @@ function answerQ(idx,btn){
   let closeDelay=2200;
   if(idx===q.c){
     btn.classList.add('correct');
-    gs.score+=20;gs.oxygen=Math.min(100,gs.oxygen+5);gs.correctAnswerCount++;gs.xp+=10;
+    gs.score+=10;gs.oxygen=Math.min(100,gs.oxygen+4);gs.correctAnswerCount++;gs.xp+=8;
     analytics.correctAnswers++;
-    playSound('correct');showToast('🎉 Dogru! +20 puan, +5 oksijen!','#52b788');
+    playSound('correct');showToast('🎉 Dogru! +10 puan, +4 oksijen!','#52b788');
     if(q.fact){
       fb.className='qfeedback correct-fb';
       fb.innerHTML='<strong>💡 Biliyor muydun?</strong><br>'+q.fact;
@@ -1597,7 +1605,7 @@ function endGame(reason){
   document.getElementById('rainOverlay').style.opacity='0';
   document.removeEventListener('keydown',onKD);document.removeEventListener('keyup',onKU);
   saveAnalytics();
-  const earned=Math.floor(gs.fidan*3+gs.score/20);
+  const earned=Math.floor(gs.fidan*2+gs.score/35);
   addGold(earned);
   addTotalFidan(gs.fidan);
   const rank=saveScore(gs.level,playerName,gs.score,gs.fidan,gs.firesSuppressed);
