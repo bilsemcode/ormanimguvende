@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ormanım Güvende 🌳 — v6</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&family=Baloo+2:wght@700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
+.tr-ui{font-family:'Baloo 2',cursive}
+#dykOverlay{display:none!important}
 body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
 #scaler{transform-origin:center center}
 #gc{width:960px;height:680px;position:relative;overflow:hidden;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.8)}
@@ -196,7 +198,7 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 .fact-box{background:linear-gradient(135deg,#f3f7ef,#eef4e8);border-radius:30px;padding:28px;max-width:720px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.45);border:5px solid #f3cc2f;position:relative}
 .fact-badge{display:inline-block;background:linear-gradient(135deg,#ffb74d,#ff8a34);color:#fff;font-family:'Fredoka One',cursive;font-size:15px;padding:8px 18px;border-radius:999px;margin-bottom:12px}
 .fact-close{position:absolute;top:16px;right:16px;width:42px;height:42px;border:none;border-radius:50%;background:rgba(27,67,50,.14);color:#1b4332;font-family:'Fredoka One',cursive;font-size:22px;cursor:pointer}
-.fact-title{font-family:'Fredoka One',cursive;font-size:22px;color:#1f4f3b;margin-bottom:10px}
+.fact-title{font-family:'Baloo 2',cursive;font-size:22px;color:#1f4f3b;margin-bottom:10px}
 .fact-sub{font-size:13px;color:#5d9b7b;margin-bottom:18px;font-weight:700}
 .fact-text{font-size:18px;line-height:1.55;color:#264635;background:rgba(116,198,157,.08);border:3px solid rgba(243,204,47,.55);border-radius:22px;padding:18px 20px;min-height:120px;display:flex;align-items:center}
 .fact-actions{display:flex;justify-content:space-between;gap:12px;margin-top:18px;flex-wrap:wrap}
@@ -223,7 +225,7 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div style="font-size:68px;margin-bottom:6px">🌳</div>
     <div class="gtitle">Ormanım<br>Güvende!</div>
     <div class="gsub">🌱 Eğitici Çevre Koruma Oyunu 🌱</div>
-    <button class="sbtn" onclick="showScreen('nameScreen')">Oynamaya Başla ▶</button>
+    <button class="sbtn" onclick="showScreen('nameScreen')"><span class="tr-ui">Oynamaya Başla ▶</span></button>
     <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
       <button class="back-btn" onclick="showScreen('scoreboardScreen');renderSB()">🏆 Skor</button>
       <button class="back-btn" onclick="showDidYouKnow()">💡 Biliyor musun?</button>
