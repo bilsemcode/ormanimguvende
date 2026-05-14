@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ormanım Güvende 🌳 — v6</title>
+<title>OrmanKoruyucuları 🌳 — FENX Çevre ve Enerji</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&family=Baloo+2:wght@700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -112,6 +112,22 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 #fireTimerBar{height:10px;background:rgba(0,0,0,.4);border-radius:6px;overflow:hidden;border:2px solid rgba(255,100,0,.5)}
 #fireTimerFill{height:100%;background:linear-gradient(90deg,#ff6b35,#e63946);border-radius:4px;transition:width .1s}
 #fireTimerLabel{text-align:center;font-size:10px;color:#ffb347;font-weight:700;margin-bottom:2px}
+
+/* FENX SCIENCE MODULES */
+#riskPanel{position:absolute;top:64px;left:14px;background:rgba(0,0,0,.58);border:2px solid rgba(255,214,10,.55);border-radius:15px;padding:8px 12px;z-index:104;pointer-events:none;min-width:210px;box-shadow:0 8px 18px rgba(0,0,0,.22)}
+.risk-title{font-family:'Baloo 2','Nunito',sans-serif;font-size:12px;color:#FFD60A;margin-bottom:5px;letter-spacing:.4px;font-weight:800}
+.risk-row{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#b7e4c7;line-height:1.55;font-family:'Nunito',sans-serif;font-weight:700}
+.risk-row strong{font-family:'Baloo 2','Nunito',sans-serif;color:#fff;font-size:13px;font-weight:800}
+#riskBadge{display:inline-block;padding:2px 8px;border-radius:999px;font-family:'Baloo 2','Nunito',sans-serif;font-size:11px;font-weight:800;color:#fff;background:#52b788}
+.carbon-card{background:linear-gradient(135deg,#203a32,#123527);border-radius:20px;padding:16px 24px;margin:10px 0;border:2px solid #74c69d;max-width:460px;width:100%}
+.carbon-title{font-family:'Fredoka One',cursive;font-size:18px;color:#b7e4c7;margin-bottom:10px;text-align:center}
+.carbon-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.carbon-item{background:rgba(255,255,255,.06);border-radius:12px;padding:9px 11px}
+.carbon-k{font-size:10px;color:#74c69d;text-transform:uppercase;letter-spacing:.6px}
+.carbon-v{font-family:'Fredoka One',cursive;font-size:18px;color:#FFD60A;margin-top:2px}
+.ai-card{background:rgba(255,255,255,.06);border:2px solid rgba(255,214,10,.35);border-radius:16px;max-width:460px;width:100%;padding:12px 16px;color:#b7e4c7;font-size:12px;line-height:1.45;margin:8px 0}
+.ai-card strong{color:#FFD60A}
+
 /* QUESTION */
 #qOverlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
 #qOverlay.active{display:flex}
@@ -142,7 +158,7 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
 .dsub{font-size:12px;color:#40916c;margin-bottom:12px;line-height:1.5}
 .dopts{display:grid;gap:10px}
 .dbtn{padding:12px 14px;border:3px solid #ffe08a;border-radius:14px;background:#fff8d6;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#4a3b00;cursor:pointer;transition:all .15s;text-align:left}
-.dbtn:hover{background:#ffd60a;color:#fff;border-color:#ffb703;transform:scale(1.02)}
+.dbtn:hover{background:#ffd60a;color:#2b2100;border-color:#ffb703;transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,.18)}
 /* Analytics summary */
 .analytics-card{background:linear-gradient(135deg,#1c3d34,#224e45);border-radius:20px;padding:16px 22px;margin:8px 0 2px;border:2px solid #52b788;max-width:460px;width:100%}
 .analytics-title{font-family:'Fredoka One',cursive;font-size:17px;color:#b7e4c7;margin-bottom:10px;text-align:center}
@@ -224,8 +240,8 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
   <div class="title-trees"></div>
   <div class="tc">
     <div style="font-size:68px;margin-bottom:6px">🌳</div>
-    <div class="gtitle">Ormanım<br>Güvende!</div>
-    <div class="gsub">🌱 Eğitici Çevre Koruma Oyunu 🌱</div>
+    <div class="gtitle">Orman<br>Koruyucuları</div>
+    <div class="gsub">🌍 Yapay Zekâ Destekli Çevre ve Yangın Farkındalık Simülasyonu 🌱</div>
     <button class="sbtn" onclick="showScreen('nameScreen')"><span class="tr-ui">Oynamaya Başla ▶</span></button>
     <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
       <button class="back-btn" onclick="showScreen('scoreboardScreen');renderSB()">🏆 Skor</button>
@@ -293,6 +309,14 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div style="font-family:'Fredoka One',cursive;font-size:11px;color:#FFD60A;margin-bottom:4px">📋 GÖREV</div>
     <div id="questText" style="font-size:11px;color:#b7e4c7;line-height:1.4"></div>
     <div id="questProgress" style="margin-top:4px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden"><div id="questFill" style="height:100%;background:#FFD60A;border-radius:3px;transition:width .4s"></div></div>
+  </div>
+
+  <div id="riskPanel">
+    <div class="risk-title">🔥 YANGIN RİSK SİMÜLASYONU</div>
+    <div class="risk-row"><span>Sıcaklık</span><strong id="tempD">--°C</strong></div>
+    <div class="risk-row"><span>Nem</span><strong id="humD">--%</strong></div>
+    <div class="risk-row"><span>Rüzgâr</span><strong id="windD">-- km/s</strong></div>
+    <div class="risk-row"><span>Risk</span><span id="riskBadge">DÜŞÜK</span></div>
   </div>
   <div id="animalAlert">🐾 Tehlikede hayvan var!</div>
   <div id="bottomHud">
@@ -411,6 +435,17 @@ body{font-family:'Nunito',sans-serif;background:#0a160a;display:flex;justify-con
     <div class="eco-bar-row"><span class="eco-bar-label">Doğayı Koruma</span><div class="eco-bar-track"><div class="eco-bar-fill" id="eb4" style="width:0;background:linear-gradient(90deg,#ffd60a,#52b788)"></div></div></div>
     <div class="eco-score-total">Toplam: <span id="ecoTotal">0</span>/100</div>
   </div>
+
+  <div class="carbon-card">
+    <div class="carbon-title">🌱 Karbon Etki Raporu</div>
+    <div class="carbon-grid">
+      <div class="carbon-item"><div class="carbon-k">Fidan Katkısı</div><div class="carbon-v" id="co2Sapling">0 kg</div></div>
+      <div class="carbon-item"><div class="carbon-k">Atık Etkisi</div><div class="carbon-v" id="co2Trash">0 kg</div></div>
+      <div class="carbon-item"><div class="carbon-k">Önlenen Yangın</div><div class="carbon-v" id="co2Fire">0 kg</div></div>
+      <div class="carbon-item"><div class="carbon-k">Toplam Etki</div><div class="carbon-v" id="co2Total">0 kg</div></div>
+    </div>
+  </div>
+  <div class="ai-card" id="aiFeedback"><strong>🤖 AI Geri Bildirimi:</strong> Performans analiz ediliyor...</div>
   <div class="analytics-card">
     <div class="analytics-title">📊 Performans Analizi</div>
     <div class="analytics-grid">
@@ -464,7 +499,7 @@ function getUnlocked(){try{return JSON.parse(localStorage.getItem('unlockedChars
 function unlockChar(i){const u=getUnlocked();if(!u.includes(i)){u.push(i);localStorage.setItem('unlockedChars',JSON.stringify(u));}}
 
 // ── ANALYTICS (TÜBİTAK) ──
-let analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0,animalsRescued:0,decisionsRight:0,decisionsWrong:0};
+let analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0,animalsRescued:0,decisionsRight:0,decisionsWrong:0,aiEasy:0,aiHard:0,riskSamples:[]};
 function saveAnalytics(){localStorage.setItem('analytics',JSON.stringify(analytics));}
 
 // ── DID YOU KNOW ──
@@ -583,42 +618,112 @@ const LEVELS={
 // Each question: t=text, options=array of {text,correct bool}, explanation, funFact
 const QS_RAW={
   anaokulu:[
-    {t:'Ormanda yere çöp atarsak ne olur? 🌿',opts:['Doğa kirlenir✓','Ağaçlar mutlu olur','Hiçbir şey olmaz'],exp:'Çöpler toprağı kirletir ve yangın riskini artırır.',fact:'🌍 Plastik çözülmesi 450 yıl sürebilir!'},
-    {t:'Ağaçlar bize ne verir? 🌳',opts:['Temiz hava✓','Plastik','Oyuncak araba'],exp:'Ağaçlar fotosentezle oksijen üretir.',fact:'🌳 Tek bir ağaç yılda 100 kg oksijen verir!'},
-    {t:'Ormanda hayvanların evidir orman. Peki ormanda yaşayan bir tavşan neyi bulur? 🐇',opts:['Barınak ve yiyecek✓','Televizyon','Araba'],exp:'Orman, hayvanların evi ve beslenme alanıdır.',fact:'🐇 Türkiye\'de 10.000\'den fazla hayvan türü var!'},
-    {t:'Ormanda ateş görürsek ne yapmalıyız? 🔥',opts:['Uzak durup büyüklere söyle✓','Yanına koş','Üstüne kağıt at'],exp:'Orman yangınları çok hızlı büyür, güvende kalmalıyız.',fact:'🔥 Bir yangın saatte 8 km yayılabilir!'},
-    {t:'Çöpleri çöp kutusuna atmalıyız. Doğru mu? 🗑️',opts:['Evet, doğru✓','Hayır, yanlış'],exp:'Çöpleri doğru yere atmak doğayı korur.',fact:'♻️ Türkiye yılda 30 milyon ton çöp üretiyor.'},
-    {t:'Ormanda koparılan çiçekler için hangisi doğru? 🌸',opts:['Yerinde bırakmak güzel✓','Hepsini koparmak','Üstüne basmak'],exp:'Çiçekler ekosistem için çok önemlidir.',fact:'🌸 Arılar için her çiçek hayat kaynağıdır!'},
-    {t:'Hayvanları korkutmak iyi bir davranış mıdır? 🐦',opts:['Hayır, yanlıştır✓','Evet, eğlencelidir'],exp:'Hayvanları korkutmak strese ve tehlikeye yol açar.',fact:'🐦 Korkutulan hayvanlar yavrusunu bırakabilir.'},
-    {t:'Ağaç dikmek neden güzeldir? 🌱',opts:['Doğayı korur✓','Ormanı azaltır','Hayvanları kaçırır'],exp:'Ağaçlar hava, su ve yaşam alanı sağlar.',fact:'🌱 Her fidan yılda 100 kg karbon emer!'},
-    {t:'Ormanlar hayvanların evidir. Doğru mu? 🏡',opts:['Evet, doğru✓','Hayır, yanlış'],exp:'Ormanlar biyoçeşitliliğin merkezidir.',fact:'🦋 Dünya ormanlarında 80.000 hayvan türü yaşar.'},
-    {t:'Ormanda cam şişe görünce ne yapmalıyız? 🍾',opts:['Büyüklere söyle✓','Orada bırak','Tekme at'],exp:'Cam kırığı yangına ve yaralanmaya yol açabilir.',fact:'🍾 Cam güneş ışığını yansıtarak yangın başlatabilir!'},
+    {t:'Ormanda yere bırakılan bir plastik şişe neye neden olabilir? 🧴',opts:['Doğayı kirletir ve hayvanlara zarar verebilir✓','Ağaçların daha hızlı büyümesini sağlar','Toprağı hemen gübreye dönüştürür'],exp:'Plastik atıklar doğada uzun süre kalır; hayvanlar bu atıkları yiyecek sanabilir veya yaralanabilir.',fact:'🧴 Plastik şişeler doğada çok uzun süre kalabilir; bu yüzden geri dönüşüm kutusuna atılmalıdır.'},
+    {t:'Piknikten sonra ateş tamamen söndürülmezse ne olabilir? 🔥',opts:['Orman yangını çıkabilir✓','Ağaçlar daha çok oksijen üretir','Hayvanlar ateşle ısınır ve zarar görmez'],exp:'Küçük bir köz bile kuru yaprakları tutuşturup büyük yangına dönüşebilir.',fact:'🔥 Ateşin söndüğünden emin olmak için közlerin tamamen soğuması gerekir.'},
+    {t:'Fidan dikmek doğaya nasıl katkı sağlar? 🌱',opts:['Yeni yaşam alanları oluşturur ve havayı temizler✓','Ormandaki canlıları azaltır','Toprağın tamamen kurumasına neden olur'],exp:'Fidanlar büyüdükçe oksijen üretir, toprağı tutar ve canlılara barınak sağlar.',fact:'🌱 Her fidan büyüdüğünde kuşlar, böcekler ve küçük canlılar için yeni bir yaşam alanı olabilir.'},
+    {t:'Ormanda cam şişe görürsek en güvenli davranış hangisidir? 🍾',opts:['Dokunmak tehlikeliyse büyüklere haber vermek✓','Şişeyi güneş alan yere bırakmak','Şişeyi kırıp küçük parçalara ayırmak'],exp:'Cam kırıkları yaralanmaya neden olabilir; ayrıca güneş altında yangın riskini artırabilir.',fact:'🍾 Cam atıklar hem yaralanma hem de yangın riski oluşturabilir.'},
+    {t:'Ağaçlar bizim için neden önemlidir? 🌳',opts:['Temiz hava üretir ve canlılara yuva olur✓','Çöpleri kendiliğinden yok eder','Yangınları her zaman tek başına söndürür'],exp:'Ağaçlar oksijen üretir, havayı temizler ve birçok canlıya yaşam alanı sağlar.',fact:'🌳 Ormanlar birçok kuş, böcek ve memeli canlı için doğal evdir.'},
+    {t:'Ormanda hayvanları korkutmak neden yanlıştır? 🐿️',opts:['Hayvanların güvenliğini ve yaşam alanını bozar✓','Hayvanların daha hızlı büyümesini sağlar','Ormanın daha temiz olmasını sağlar'],exp:'Hayvanları korkutmak onların yuvalarından uzaklaşmasına ve tehlikeye girmesine neden olabilir.',fact:'🐿️ Ormanda sessiz ve dikkatli davranmak canlıları korumanın önemli bir yoludur.'},
+    {t:'Çöpleri doğru kutuya atmak neden önemlidir? 🗑️',opts:['Geri dönüşüm ve temiz çevre için gereklidir✓','Çöplerin ormanda kaybolmasını sağlar','Yangın riskini her zaman sıfıra indirir'],exp:'Atıkları ayrıştırmak geri dönüşümü kolaylaştırır ve doğanın kirlenmesini azaltır.',fact:'♻️ Kağıt, plastik, cam ve metal atıklar ayrı kutulara atıldığında yeniden değerlendirilebilir.'},
+    {t:'Ormanda duman görürsek ne yapmalıyız? 💨',opts:['Hemen bir büyüğe haber vermeliyiz✓','Dumana doğru koşmalıyız','Dumanı izleyip oyun oynamaya devam etmeliyiz'],exp:'Duman yangın belirtisi olabilir; çocuklar güvenli alana gidip büyüklerden yardım istemelidir.',fact:'💨 Duman erken fark edilirse yangın büyümeden müdahale edilebilir.'},
+    {t:'Suyu gereksiz yere açık bırakmak çevreyi nasıl etkiler? 💧',opts:['Su kaynaklarının azalmasına neden olur✓','Ormanların daha hızlı büyümesini sağlar','Hiçbir etkisi yoktur'],exp:'Su tasarrufu yapmak hem canlılar hem de doğal kaynaklar için önemlidir.',fact:'💧 Temiz su, insanlar kadar bitkiler ve hayvanlar için de yaşamsal öneme sahiptir.'},
+    {t:'Ormanda çiçekleri koparmak yerine ne yapmalıyız? 🌸',opts:['Yerinde bırakıp korumalıyız✓','Hepsini toplayıp eve götürmeliyiz','Üzerine basıp geçmeliyiz'],exp:'Çiçekler arılar ve kelebekler gibi canlılar için besin kaynağıdır.',fact:'🌸 Çiçekleri dalında bırakmak ekosistemin devamına yardımcı olur.'},
   ],
   ilkokul:[
-    {t:'Ormanları korumak için ne yapmalıyız? 🌲',opts:['Çöp atmamalıyız✓','Dalları kırmalıyız','Ateşi açık bırakmalıyız'],exp:'Çöp atmamak en temel çevre koruma davranışıdır.',fact:'🌲 Türkiye ormanları 22 milyon hektarı kaplıyor.'},
-    {t:'Piknikten sonra ateşi neden tamamen söndürmeliyiz? 🏕️',opts:['Yangın çıkmaması için✓','Daha çok duman çıksın','Eğlenceli olsun'],exp:'Söndürülmemiş ateş büyük yangınlara yol açabilir.',fact:'🔥 Orman yangınlarının %90\'ı insan kaynaklı.'},
-    {t:'Ormanlar hangi canlılar için özellikle önemlidir? 🦊',opts:['Hayvanlar ve bitkiler✓','Sadece arabalar','Sadece binalar'],exp:'Ormanlar binlerce türün yaşam alanıdır.',fact:'🦊 Bir hektar ormanda 1 milyondan fazla böcek yaşar!'},
-    {t:'Plastik atıklar doğaya zarar verebilir. Doğru mu? 🛍️',opts:['Evet, doğru✓','Hayır, zararsız'],exp:'Plastik mikrolara ayrışarak su ve toprağı kirletir.',fact:'🛍️ Okyanuslarda 150 milyon ton plastik var!'},
-    {t:'Ağaçlar havaya ne kazandırır? 🌬️',opts:['Daha temiz hava✓','Daha çok çöp','Daha çok duman'],exp:'Ağaçlar CO₂ emip O₂ üretir, havayı temizler.',fact:'🌬️ 10 ağaç bir arabayı 1 yıl dengeleyebilir!'},
-    {t:'Ormanda sigara izmariti atmak neden tehlikelidir? 🚬',opts:['Yangına neden olabilir✓','Yağmur yağdırır','Ağaçları sular'],exp:'Sıcak izmarit kuru yapraklarda yangın çıkarır.',fact:'🚬 İzmarit 5 yıl çözülmez — kanserojen içerir!'},
-    {t:'Geri dönüşüm ormanları korur. Doğru mu? ♻️',opts:['Evet, doğru✓','Hayır, alakasız'],exp:'Geri dönüşüm kağıt için daha az ağaç kesilmesini sağlar.',fact:'♻️ 1 ton geri dönüştürülmüş kağıt 17 ağacı kurtarır!'},
-    {t:'Hangisi orman dostu bir davranıştır? 🌿',opts:['Fidan dikmek✓','Çöpleri bırakmak','Ağaç kabuğu koparmak'],exp:'Fidan dikmek orman alanını ve biyoçeşitliliği artırır.',fact:'🌿 Dünyada her yıl 15 milyar ağaç kesiliyor.'},
-    {t:'Orman yangını görünce bunu gizlemeliyiz. Doğru mu? 🔥',opts:['Hayır, yanlış✓','Evet, doğru'],exp:'Yangını hemen 177 numarasını arayarak bildirmeliyiz.',fact:'📞 Orman yangınları için 177 numarasını ara!'},
-    {t:'Ormanlar erozyonu nasıl önler? 🏔️',opts:['Toprağı köklerle tutar✓','Toprağı yok eder','Toprağı yakar'],exp:'Ağaç kökleri toprağı sabitleyerek erozyonu azaltır.',fact:'⛰️ Ormansız alanlarda erozyon 100 kat daha hızlıdır!'},
+    {t:'Orman yangınlarının önlenmesi için en doğru davranış hangisidir? 🔥',opts:['Piknik ateşini tamamen söndürmek ve çöp bırakmamak✓','Kuru yaprakların yanında ateş yakmak','Cam şişeleri güneş alan yere bırakmak','Sigara izmaritini toprağa gömmek'],exp:'Yangınların önemli kısmı ihmalden kaynaklanır; ateş, cam ve izmarit gibi riskler ortadan kaldırılmalıdır.',fact:'🔥 Söndürülmemiş közler rüzgârla tekrar alevlenebilir.'},
+    {t:'Geri dönüşüm ormanları nasıl korur? ♻️',opts:['Kağıt ve ambalaj için yeni hammadde ihtiyacını azaltır✓','Daha fazla ağaç kesilmesine neden olur','Yangınların hızını artırır','Toprağın su tutmasını engeller'],exp:'Geri dönüşüm, yeni hammadde kullanımını azaltır; böylece doğal kaynaklar korunur.',fact:'♻️ Kağıt geri dönüşümü ağaç kesimini ve enerji tüketimini azaltmaya yardımcı olur.'},
+    {t:'Düşük nem ve kuvvetli rüzgâr orman yangını riskini nasıl etkiler? 🌬️',opts:['Yangının başlama ve yayılma riskini artırır✓','Yangın riskini tamamen bitirir','Sadece hayvan sayısını artırır','Ormandaki çöpleri yok eder'],exp:'Kuru hava bitkileri daha yanıcı hale getirir; rüzgâr ise alevlerin hızla yayılmasına neden olabilir.',fact:'🌬️ Rüzgârlı havalarda küçük bir kıvılcım bile geniş alana yayılabilir.'},
+    {t:'Ormandaki cam atıklar neden tehlikelidir? 🍾',opts:['Kesici olabilir ve güneş altında yangın riskini artırabilir✓','Toprağı hemen besin maddesine dönüştürür','Hayvanlar için güvenli oyuncaktır','Yağmur yağmasını sağlar'],exp:'Cam atıklar hem canlıları yaralayabilir hem de güneş ışığını yoğunlaştırarak risk oluşturabilir.',fact:'🍾 Cam atıklar doğada çok uzun süre kalır ve güvenli şekilde toplanmalıdır.'},
+    {t:'Fidan dikimi neden sürdürülebilir çevre için önemlidir? 🌱',opts:['Karbon tutumu, gölge ve yaşam alanı sağlar✓','Toprak kaymasını artırır','Su kaynaklarını tamamen kurutur','Canlı çeşitliliğini azaltır'],exp:'Ağaçlar karbonu depolar, toprağı tutar, serinlik sağlar ve canlılara habitat oluşturur.',fact:'🌱 Fidan dikmek yalnızca ağaç sayısını değil, ekosistemdeki yaşamı da artırır.'},
+    {t:'Orman yangını gördüğümüzde çocuklar için en güvenli ilk adım nedir? 📞',opts:['Güvenli alana uzaklaşıp yetişkinlere haber vermek✓','Yangına tek başına müdahale etmek','Dumanın içine doğru yürümek','Yangını izlemek için yaklaşmak'],exp:'Yangına yaklaşmak tehlikelidir; güvenli mesafeden yetkililere haber verilmelidir.',fact:'📞 Türkiye’de acil durumlar için 112 Acil Çağrı Merkezi aranır.'},
+    {t:'Atık piller neden doğaya bırakılmamalıdır? 🔋',opts:['Toprağı ve suyu kirletebilecek zararlı maddeler içerebilir✓','Ağaçların hızlı büyümesi için gereklidir','Orman hayvanları için besindir','Kendiliğinden temiz suya dönüşür'],exp:'Pillerdeki kimyasallar toprağa ve suya karışarak canlılara zarar verebilir.',fact:'🔋 Atık piller özel pil toplama kutularına atılmalıdır.'},
+    {t:'Ormanlar erozyonu nasıl azaltır? ⛰️',opts:['Kökleriyle toprağı tutarak✓','Toprağı tamamen gevşeterek','Yağmur suyunu hiç geçirmeyerek','Rüzgârı her zaman fırtınaya çevirerek'],exp:'Ağaç kökleri toprağı sabitler; yağmur ve rüzgârın toprağı taşımasını azaltır.',fact:'⛰️ Bitki örtüsü azaldığında toprak kaybı ve sel riski artabilir.'},
+    {t:'Çevre dostu bir okul davranışı hangisidir? 🏫',opts:['Kağıtları geri dönüşüme atmak ve gereksiz ışıkları kapatmak✓','Musluğu açık bırakmak','Sınıfta atıkları yere bırakmak','Tek kullanımlık ürünleri sürekli artırmak'],exp:'Kaynak tasarrufu ve atık azaltımı çevre dostu davranışların temelidir.',fact:'🏫 Okuldaki küçük tasarruflar yıl sonunda büyük enerji ve su kazancı sağlayabilir.'},
+    {t:'Ormanlar su döngüsüne nasıl katkı sağlar? 💧',opts:['Toprağın su tutmasına ve nem dengesine yardımcı olur✓','Yağmuru tamamen durdurur','Nehirleri kirletmek için çalışır','Suyu sadece yazın üretir'],exp:'Orman toprağı suyu tutar, buharlaşma ve nem dengesiyle bölgesel iklime katkı verir.',fact:'💧 Sağlıklı ormanlar sel ve kuraklık etkilerini azaltmaya yardımcı olabilir.'},
   ],
   ortaokul:[
-    {t:'Ormansızlaşmanın en önemli sonuçlarından biri nedir? 🌍',opts:['Yaşam alanı kaybı✓','Havanın temizlenmesi','Su kaynaklarının artması'],exp:'Ormanlar yok olunca binlerce tür evsiz kalır.',fact:'🌍 Her yıl 13 milyon hektar orman yok oluyor!'},
-    {t:'Orman yangınlarının en yaygın insan kaynaklı sebebi nedir? 🔥',opts:['İhmal ve dikkatsizlik✓','Kar yağışı','Toprağın verimliliği'],exp:'Söndürülmemiş ateş, izmarit ve cam şişeler başlıca nedendir.',fact:'🔥 Türkiye\'de en fazla yangın Temmuz-Ağustos\'ta çıkar.'},
-    {t:'Ormanlar iklim dengesine nasıl katkı sağlar? 🌡️',opts:['Karbon döngüsünü dengeler✓','İklimi hiç etkilemez','Sadece hayvanları etkiler'],exp:'Ormanlar atmosferdeki karbon miktarını düzenler.',fact:'🌡️ Amazon ormanları 140 milyar ton karbon depolar!'},
-    {t:'Ormanlar biyolojik çeşitlilik için önemlidir. Doğru mu? 🦋',opts:['Evet, kesinlikle✓','Hayır, bağlantısız'],exp:'Dünya canlı türlerinin %80\'i ormanlarda yaşar.',fact:'🦋 Her yıl ortalama 50.000 tür yok oluyor!'},
-    {t:'Geri dönüşüm ormanlara nasıl katkı sağlar? ♻️',opts:['Kağıt için az ağaç kesilir✓','Daha çok ağaç kesilir','Yangınları artırır'],exp:'Geri dönüştürülmüş malzeme hammadde ihtiyacını azaltır.',fact:'♻️ Türkiye geri dönüşüm oranını %35\'e çıkardı!'},
-    {t:'Hangisi sürdürülebilir bir ormancılık uygulamasıdır? 🌱',opts:['Kontrollü ağaçlandırma✓','Rastgele ağaç kesme','Atıkları ormana bırakma'],exp:'Sürdürülebilir ormancılık kesilen her ağaç için yeni fidan diker.',fact:'🌱 Norveç 2020\'de sıfır ormansızlaşmayı başardı!'},
-    {t:'Orman kaybı erozyon riskini artırır. Doğru mu? ⛰️',opts:['Evet, kesinlikle✓','Hayır, risk azalır'],exp:'Kök sistemi olmayan toprak yağmurla kolayca akar.',fact:'⛰️ Türkiye topraklarının %59\'u erozyon tehdidi altında!'},
-    {t:'Ormanlar su döngüsüne nasıl katkı sağlar? 💧',opts:['Nem ve yağış dengesine katkı✓','Nehirleri tamamen yok eder','Yağışı engeller'],exp:'Ormanlar su buharı salarak yağış döngüsüne katkıda bulunur.',fact:'💧 Amazon ormanı kendi yağışının %50\'sini kendisi üretir!'},
-    {t:'Cam ve plastik atıkları ormanda bırakmak çevreye zarar vermez. Doğru mu? 🍾',opts:['Yanlış, zarar verir✓','Doğru, zararsız'],exp:'Bu atıklar yangına ve toksik kirliğe yol açar.',fact:'🍾 Cam güneş altında mercek etkisi yaratarak yangın başlatabilir!'},
-    {t:'Bir birey ormanları en etkili nasıl koruyabilir? 🙌',opts:['Bilinçli davranmak ve fidan dikmek✓','Ateşi kontrolsüz bırakmak','Ağaçlara zarar vermek'],exp:'Bireysel sorumluluk kolektif değişimi başlatır.',fact:'🙌 2019\'da Türkiye\'de 11 milyon fidan tek günde dikildi!'},
+    {t:'Yangın risk indeksinde sıcaklık, nem ve rüzgâr birlikte neden değerlendirilir? 🌡️',opts:['Çünkü yangının başlama ve yayılma olasılığını birlikte belirlerler✓','Çünkü yalnızca sıcaklık tek başına her zaman yeterlidir','Çünkü nem arttıkça yangın mutlaka artar','Çünkü rüzgârın yangınla hiçbir ilişkisi yoktur'],exp:'Yüksek sıcaklık, düşük nem ve kuvvetli rüzgâr birleştiğinde yanıcı madde kurur ve alevler daha hızlı yayılır.',fact:'🌡️ Yangın riski tek bir değişkene değil, çevresel koşulların birleşimine bağlıdır.'},
+    {t:'Orman yangınlarında erken müdahalenin çevresel etkisi nedir? 🚒',opts:['Karbon salımını, habitat kaybını ve toprak zararını azaltır✓','Yangının daha geniş alana yayılmasını sağlar','Biyoçeşitlilik kaybını artırır','Toprağın su tutma kapasitesini kesin olarak yok eder'],exp:'Yangın büyümeden kontrol altına alınırsa daha az ağaç, canlı ve toprak ekosistemi zarar görür.',fact:'🚒 Erken bildirim, yangın yönetiminde en kritik aşamalardan biridir.'},
+    {t:'Ormansızlaşma iklim değişikliğini nasıl etkiler? 🌍',opts:['Karbon yutaklarını azaltarak atmosferdeki CO₂ dengesini bozar✓','Atmosferdeki karbonu kendiliğinden azaltır','Yağış düzenini her zaman iyileştirir','Biyoçeşitliliği doğrudan artırır'],exp:'Ağaçlar karbon depolar; orman kaybı karbon tutumunu azaltır ve ekosistem dengesini bozar.',fact:'🌍 Ormanlar doğal karbon yutaklarıdır; iklim dengesinde önemli rol oynar.'},
+    {t:'Sürdürülebilir ormancılıkta en doğru yaklaşım hangisidir? 🌲',opts:['Ekosistem dengesini koruyarak planlı bakım ve yenileme yapmak✓','Her ağacı aynı anda kesmek','Yangından sonra alanı çöplük olarak kullanmak','Canlı çeşitliliğini dikkate almamak'],exp:'Sürdürülebilir ormancılık yalnızca ağaç sayısını değil; toprak, su, canlı çeşitliliği ve yenilenmeyi birlikte ele alır.',fact:'🌲 Sürdürülebilir yönetim, bugünün ihtiyacını karşılarken geleceğin ormanını da korur.'},
+    {t:'Bir oyunda çevre bilinci skoru ölçmek neden bilimsel açıdan değerlidir? 📊',opts:['Davranışları sayısal veriye dönüştürerek öğrenme etkisini analiz etmeyi sağlar✓','Oyunun sadece görsel olarak güzel görünmesini sağlar','Öğrencilerin hiç veri üretmemesini sağlar','Yangın riskini oyundan tamamen çıkarır'],exp:'Toplanan atık, doğru cevap, tepki süresi ve yangın müdahalesi gibi veriler öğrenme çıktısı olarak analiz edilebilir.',fact:'📊 Ölçülebilir veri, bir eğitim uygulamasını bilimsel araştırmaya dönüştürür.'},
+    {t:'Adaptif yapay zekâ çevre eğitiminde ne işe yarar? 🤖',opts:['Öğrencinin performansına göre soru ve senaryo zorluğunu ayarlar✓','Tüm öğrencilere hep aynı zorlukta içerik verir','Yanlış cevapları tamamen görmezden gelir','Çevre konularını oyundan kaldırır'],exp:'Adaptif sistem, öğrencinin eksik kaldığı konularda daha öğretici içerik sunar; başarılıysa daha zor senaryolar verir.',fact:'🤖 Uyarlanabilir öğrenme, her öğrencinin ihtiyacına göre eğitim deneyimi oluşturabilir.'},
+    {t:'Karbon etki raporunda fidan, atık ve yangın verilerinin birlikte kullanılması ne sağlar? 🧮',opts:['Oyuncunun çevresel katkısını daha bütüncül göstermeyi sağlar✓','Sadece puanı rastgele artırır','Çevre etkisini ölçmeyi imkânsız hale getirir','Yangın simülasyonunu gereksiz yapar'],exp:'Fidan dikimi, atık toplama ve yangın müdahalesi farklı çevresel etkileri temsil eder; birlikte raporlandığında proje daha ölçülebilir olur.',fact:'🧮 Çevresel etki hesaplamaları tahmini olsa bile karşılaştırmalı öğrenme için güçlü bir göstergedir.'},
+    {t:'Biyoçeşitlilik kaybı orman yangınlarından nasıl etkilenir? 🦋',opts:['Canlıların habitatı, besin zinciri ve üreme alanları zarar görebilir✓','Tüm canlı türleri yangından hiç etkilenmez','Yangın her zaman tür sayısını artırır','Sadece cansız maddeler etkilenir'],exp:'Yangın; bitkileri, hayvanları, mikroorganizmaları ve bunların kurduğu besin ağını etkileyebilir.',fact:'🦋 Orman yalnızca ağaçlardan değil, birbirine bağlı binlerce canlıdan oluşan bir ekosistemdir.'},
+    {t:'Düşük nemli ve rüzgârlı bir günde ormanda yapılmaması gereken davranış hangisidir? 🏕️',opts:['Ateş yakmak veya cam/yanıcı atık bırakmak✓','Çöpleri çantaya koymak','Yetkililerin uyarılarına uymak','Güvenli yürüyüş parkurunu kullanmak'],exp:'Kurak ve rüzgârlı hava yangın riskini artırdığı için ateş ve yanıcı atıklar büyük tehlike oluşturur.',fact:'🏕️ Riskli hava koşullarında en güvenli davranış ateş kaynaklarından tamamen uzak durmaktır.'},
+    {t:'Ön test ve son test karşılaştırması bu projede neyi gösterir? 🧪',opts:['Oyunun çevre bilgisi ve farkındalık üzerindeki öğrenme etkisini✓','Oyunun renginin güzel olup olmadığını','Bilgisayarın markasını','Oyuncunun boyunu ve kilosunu'],exp:'Ön test-son test yöntemi, uygulamadan önceki ve sonraki bilgi/farkındalık düzeyini karşılaştırmaya yarar.',fact:'🧪 Deneysel ölçüm, yarışma raporunda projenin bilimsel yönünü güçlendirir.'},
   ],
 };
+
+
+// ── FENX SCIENCE MODULES: fire risk, carbon impact, adaptive AI ──
+function initFireRisk(){
+  const scenarios=[
+    {temp:24,humidity:64,wind:8,label:'DÜŞÜK',score:18,color:'#52b788',mult:.75},
+    {temp:31,humidity:42,wind:18,label:'ORTA',score:48,color:'#FFD60A',mult:1.15},
+    {temp:36,humidity:28,wind:28,label:'YÜKSEK',score:72,color:'#ff6b35',mult:1.65},
+    {temp:40,humidity:18,wind:38,label:'KRİTİK',score:91,color:'#e63946',mult:2.25}
+  ];
+  return {...scenarios[Math.floor(Math.random()*scenarios.length)],changeIn:12+Math.random()*12};
+}
+function updateFireRisk(dt){
+  const r=gs.risk;if(!r)return;
+  r.changeIn-=dt;
+  if(r.changeIn<=0){
+    r.temp=Math.max(20,Math.min(43,r.temp+(Math.random()*8-3)));
+    r.humidity=Math.max(12,Math.min(75,r.humidity+(Math.random()*18-9)));
+    r.wind=Math.max(4,Math.min(45,r.wind+(Math.random()*14-5)));
+    const score=(r.temp-20)*2.0+(70-r.humidity)*0.9+r.wind*1.05;
+    if(score<38)Object.assign(r,{label:'DÜŞÜK',color:'#52b788',mult:.8,score});
+    else if(score<62)Object.assign(r,{label:'ORTA',color:'#FFD60A',mult:1.15,score});
+    else if(score<82)Object.assign(r,{label:'YÜKSEK',color:'#ff6b35',mult:1.65,score});
+    else Object.assign(r,{label:'KRİTİK',color:'#e63946',mult:2.25,score});
+    r.changeIn=10+Math.random()*14;
+    showToast(`🔥 Risk güncellendi: ${r.label} — ${Math.round(r.temp)}°C, nem %${Math.round(r.humidity)}` , r.color);
+  }
+  gs.riskTimer=(gs.riskTimer||0)+dt;
+  if(gs.riskTimer>4){gs.riskTimer=0;analytics.riskSamples.push(Math.round(r.score));}
+  document.getElementById('tempD').textContent=Math.round(r.temp)+'°C';
+  document.getElementById('humD').textContent='%'+Math.round(r.humidity);
+  document.getElementById('windD').textContent=Math.round(r.wind)+' km/s';
+  const b=document.getElementById('riskBadge');b.textContent=r.label;b.style.background=r.color;b.style.color=(r.label==='ORTA')?'#3a2d00':'#fff';
+}
+function getFireRiskMultiplier(){return gs&&gs.risk?gs.risk.mult:1;}
+function updateAdaptiveAI(){
+  if(!gs)return;
+  const total=gs.correctAnswerCount+gs.wrongAnswerCount;
+  if(total<3||total===gs.aiLastSwitch)return;
+  const ratio=gs.correctAnswerCount/total;
+  const old=gs.adaptiveDifficulty;
+  if(ratio>=0.78&&gs.firesSuppressed>=1)gs.adaptiveDifficulty='ortaokul';
+  else if(ratio<=0.42||gs.wrongAnswerCount>=3)gs.adaptiveDifficulty='anaokulu';
+  else gs.adaptiveDifficulty=gs.level==='ortaokul'?'ortaokul':'ilkokul';
+  if(old!==gs.adaptiveDifficulty){
+    gs.qPool=buildQPool(gs.adaptiveDifficulty);
+    gs.aiLastSwitch=total;
+    if(gs.adaptiveDifficulty==='anaokulu'){analytics.aiEasy++;gs.aiMessage='Zorluk düşürüldü; sistem daha öğretici sorulara geçti.';showToast('🤖 AI: Öğretici mod açıldı','#74c69d');}
+    else if(gs.adaptiveDifficulty==='ortaokul'){analytics.aiHard++;gs.aiMessage='Başarı yüksek; sistem daha zor yangın ve çevre sorularına geçti.';showToast('🤖 AI: Zorluk artırıldı','#FFD60A');}
+    else{gs.aiMessage='Performans dengeli; sistem orta düzey çevre sorularıyla devam ediyor.';}
+  }
+}
+function calculateCarbonImpact(){
+  const sapling=gs.fidan*1.6;              // eğitim simülasyonu için yıllık tahmini katkı
+  const trash=gs.trashCollectedCount*0.18; // atık temizleme etkisi
+  const fire=gs.firesSuppressed*3.4;       // erken yangın müdahalesiyle önlenen zarar
+  const rescue=(gs.animalsRescuedCount||0)*0.35;
+  const total=sapling+trash+fire+rescue;
+  return {sapling,trash,fire,rescue,total};
+}
+function buildAIFeedback(correctPct,avgReaction){
+  const riskAvg=analytics.riskSamples.length?Math.round(analytics.riskSamples.reduce((a,b)=>a+b,0)/analytics.riskSamples.length):Math.round(gs.risk.score);
+  let txt='';
+  if(correctPct>=75&&gs.firesSuppressed>=2)txt='Çevre bilgisi ve yangın müdahalesi güçlü. Öğrenci ileri düzey kriz senaryolarına hazır.';
+  else if(correctPct<50)txt='Bilgi kazanımı desteklenmeli. Sistem daha basit açıklamalar ve tekrar sorularıyla öğretici moda geçti.';
+  else txt='Temel çevre farkındalığı oluştu. Daha fazla uygulama ile karar verme hızı ve yangın önceliklendirmesi gelişebilir.';
+  if(avgReaction>6)txt+=' Tepki süresi yüksek olduğu için hızlı karar anı çalışmaları önerilir.';
+  txt+=` Ortalama yangın risk indeksi: ${riskAvg}/100.`;
+  return txt;
+}
 
 // ── Process questions: shuffle options, track correct index ──
 function processQ(q,nOpts){
@@ -753,7 +858,7 @@ function initGS(level){
   const oxygenBonus=C.oxygenBonus || 0;
   const ecoBonus=C.ecoBonus || (C.abilityId==='eco'?15:0);
   const qPool=buildQPool(level);
-  analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0,animalsRescued:0,decisionsRight:0,decisionsWrong:0};
+  analytics={correctAnswers:0,wrongAnswers:0,responseTimes:[],trashCollected:0,firesSuppressed:0,animalsRescued:0,decisionsRight:0,decisionsWrong:0,aiEasy:0,aiHard:0,riskSamples:[]};
   return{
     level,cfg,score:0,lives:cfg.lives,oxygen:Math.min(100,100+oxygenBonus),fidan:0,firesSuppressed:0,
     timeLeft:GAME_DURATION,goldEarned:0,
@@ -772,6 +877,7 @@ function initGS(level){
     animals:spawnAnimals(),
     wind:initWind(),
     weather:initWeather(),
+    risk:initFireRisk(),riskTimer:0,adaptiveDifficulty:level,aiMessage:'Başlangıç düzeyi seçilen seviyeye göre ayarlandı.',aiLastSwitch:0,
     powerups:[],puTimer:8+Math.random()*12,
     fireKits:[],fireKitTimer:15+Math.random()*10,
     fireKitStock:0,fireKitUsed:0,eKeyHeld:false,
@@ -863,7 +969,7 @@ function answerDecision(opt,d){
   },1200);
 }
 function nextQ(){
-  if(!gs.qPool.length){gs.qPool=buildQPool(gs.level);gs.qUsed=[];}
+  if(!gs.qPool.length){gs.qPool=buildQPool(gs.adaptiveDifficulty||gs.level);gs.qUsed=[];}
   const q=gs.qPool.shift();gs.qUsed.push(q);return q;
 }
 
@@ -888,7 +994,8 @@ const COLL_R=14;
 
 function update(dt){
   const p=gs.player,cfg=gs.cfg,k=gs.keys;
-  const FIRE_TIMEOUT=cfg.fireTimeout||12;
+  const FIRE_TIMEOUT=(cfg.fireTimeout||12)/Math.max(0.75,getFireRiskMultiplier());
+  updateFireRisk(dt);
 
   // Timer
   gs.timeLeft-=dt;if(gs.timeLeft<=0){gs.timeLeft=0;endGame('time');return;}
@@ -936,7 +1043,7 @@ function update(dt){
   if(Math.random()<cfg.trashRate*60*dt)spawnTrash();
   for(const t of gs.trash){
     t.age+=dt;gs.oxygen=Math.max(0,gs.oxygen-.0004*60*dt);
-    if(!t.onFire&&t.age>8&&gs.fires.length<3&&Math.random()<cfg.fireRate*60*dt){t.onFire=true;spawnFire(t.x,t.y);}
+    if(!t.onFire&&t.age>8&&gs.fires.length<3&&Math.random()<cfg.fireRate*getFireRiskMultiplier()*60*dt){t.onFire=true;spawnFire(t.x,t.y);}
   }
   for(let i=gs.trash.length-1;i>=0;i--){
     const t=gs.trash[i];
@@ -1121,7 +1228,7 @@ function updateWeather(dt){
     if(w.lightningTimer<=0){
       w.lightningTimer=3+Math.random()*5;
       // Lightning can randomly start a fire!
-      if(Math.random()<0.15&&gs.fires.length<3){
+      if(Math.random()<(0.10*getFireRiskMultiplier())&&gs.fires.length<3){
         const lx=gs.cam.x+Math.random()*W,ly=gs.cam.y+Math.random()*H/2;
         spawnFire(lx,ly);showToast('⚡ Şimşek yangın başlattı!','#FFD60A');
       }
@@ -1542,7 +1649,7 @@ let fIdG=0;
 function spawnFire(x,y){
   const id='f'+(++fIdG);
   gs.fires.push({x,y,hp:100,age:0,anim:0,id});gs.fireTimers[id]=0;
-  playSound('fire');showToast('🔥 Yangın cikti! Hemen söndür!','#ff6b35');
+  playSound('fire');showToast(`🔥 Yangın çıktı! Risk: ${gs.risk?gs.risk.label:'NORMAL'} — Hemen söndür!`, gs.risk?gs.risk.color:'#ff6b35');
   triggerShake(.5);
   const rf=document.getElementById('redFlash');rf.style.background='rgba(220,0,0,0.4)';setTimeout(()=>rf.style.background='rgba(220,0,0,0)',180);
   for(const a of gs.animals){if(!a.dead&&wDist2(a,{x,y})<200){a.state='panic';a.stateTimer=5;const ang=Math.atan2(a.y-y,a.x-x);const spd2=a.bird?220:150;a.vx=Math.cos(ang)*spd2;a.vy=Math.sin(ang)*spd2*.5;a.targetVx=a.vx;a.targetVy=a.vy;}}
@@ -1642,7 +1749,7 @@ function answerQ(idx,btn){
     btn.classList.add('correct');
     gs.score+=12;gs.oxygen=Math.min(100,gs.oxygen+4);gs.correctAnswerCount++;gs.xp+=8;
     analytics.correctAnswers++;
-    playSound('correct');showToast('🎉 Dogru! +10 puan, +4 oksijen!','#52b788');
+    playSound('correct');showToast('🎉 Doğru! +12 puan, +4 oksijen!','#52b788');
     if(q.fact){
       fb.className='qfeedback correct-fb';
       fb.innerHTML='<strong>💡 Biliyor muydun?</strong><br>'+q.fact;
@@ -1652,7 +1759,7 @@ function answerQ(idx,btn){
     btn.classList.add('wrong');const all=document.querySelectorAll('.qbtn');if(all[q.c])all[q.c].classList.add('correct');
     gs.lives=Math.max(0,gs.lives-1);gs.oxygen=Math.max(0,gs.oxygen-10);gs.wrongAnswerCount++;
     analytics.wrongAnswers++;
-    playSound('wrong');showToast('❌ Yanlis! -10 oksijen, yangın geliyor!','#e63946');updateHUD();triggerShake(.6);
+    playSound('wrong');showToast('❌ Yanlış! -10 oksijen, yangın geliyor!','#e63946');updateHUD();triggerShake(.6);
     if(q.exp){
       fb.className='qfeedback wrong-fb';
       fb.innerHTML='<strong>📝 Neden?</strong> '+q.exp+(q.fact?'<br><span style="color:#27ae60;font-size:11px">💡 '+q.fact+'</span>':'');
@@ -1660,6 +1767,7 @@ function answerQ(idx,btn){
     gs.wrongFirePending=true;gs.wrongFireDelay=2.0;
     closeDelay=3800; // yanlış cevap → daha uzun göster
   }
+  updateAdaptiveAI();
   // Show info card at bottom of screen too
   if(q.fact){
     const ic=document.getElementById('infoCard');
@@ -1708,7 +1816,13 @@ function endGame(reason){
   document.getElementById('anFire').textContent=analytics.firesSuppressed;
   const rescueCount=Math.max(gs.animalsRescuedCount||0, analytics.animalsRescued||0);
   document.getElementById('anRescue').textContent=rescueCount;
-  document.getElementById('goPlayerName').textContent=playerName+' — '+LEVELS[gs.level].name;
+  const carbon=calculateCarbonImpact();
+  document.getElementById('co2Sapling').textContent=carbon.sapling.toFixed(1)+' kg';
+  document.getElementById('co2Trash').textContent=carbon.trash.toFixed(1)+' kg';
+  document.getElementById('co2Fire').textContent=carbon.fire.toFixed(1)+' kg';
+  document.getElementById('co2Total').textContent=carbon.total.toFixed(1)+' kg CO₂';
+  document.getElementById('aiFeedback').innerHTML='<strong>🤖 AI Geri Bildirimi:</strong> '+buildAIFeedback(correctPct,avgReaction);
+  document.getElementById('goPlayerName').textContent=playerName+' — '+LEVELS[gs.level].name+' — AI düzeyi: '+(gs.adaptiveDifficulty||gs.level);
   document.getElementById('goTitle').textContent=reason==='time'?'⏱ Süre Doldu!':'Oyun Bitti!';
   document.getElementById('goEm').textContent=reason==='time'?'⏱':'🌳';
   // Eco bars (animate after show)
